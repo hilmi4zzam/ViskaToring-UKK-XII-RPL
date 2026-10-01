@@ -10,6 +10,10 @@
 !.yarn/releases
 !.yarn/versions
 
+#data dummy
+/data/dudi.json
+/data/users.json
+
 # testing
 /coverage
 
