@@ -28,7 +28,7 @@ export default function KonfigurasiPage() {
 
   const handleMasuk = () => {
     // Navigasi ke beranda setelah klik Masuk
-    router.push('/');
+    router.push('/dashboard');
   };
 
   return (
