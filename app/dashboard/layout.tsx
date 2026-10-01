@@ -53,15 +53,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </div>
         
-        {/* Yellow Footer Banner */}
-        <div className="bg-[#EFEF5B] h-[44px] w-full flex items-center justify-around px-6 flex-shrink-0">
-          {/* Logo Placeholders */}
-          <div className="h-6 w-24 bg-blue-900/30 rounded flex items-center justify-center text-[10px] font-bold text-black/50">ASTRA</div>
-          <div className="h-6 w-32 bg-red-600/30 rounded flex items-center justify-center text-[10px] font-bold text-black/50">Sinarmas Land</div>
-          <div className="h-6 w-24 bg-green-600/30 rounded flex items-center justify-center text-[10px] font-bold text-black/50">Pegadaian</div>
-          <div className="h-6 w-24 bg-blue-600/30 rounded flex items-center justify-center text-[10px] font-bold text-black/50">Indomaret</div>
+        {/* Yellow Footer Banner with Marquee */}
+        <div className="bg-[#EFEF5B] h-[44px] w-full overflow-hidden flex items-center flex-shrink-0">
+          <div className="flex animate-marquee whitespace-nowrap">
+            {[...Array(3)].map((_, setIndex) => (
+              <div key={setIndex} className="flex items-center">
+                {['/pngegg.png', '/pngegg (1).png', '/pngegg (2).png', '/pngegg (3).png'].map((src, idx) => (
+                  <div key={idx} className="mx-8 flex items-center justify-center">
+                    <img src={src} alt={`Sponsor ${idx}`} className="h-[32px] w-auto object-contain max-w-[180px]" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </main>
+
+      {/* Global CSS for Marquee Animation */}
+      <style jsx global>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-33.333333%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 15s linear infinite;
+          width: max-content;
+        }
+      `}</style>
     </div>
   );
 }
