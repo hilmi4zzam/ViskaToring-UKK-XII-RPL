@@ -4,8 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import dudiData from '../../data/dudi.json';
-import usersData from '../../data/users.json';
+import dudiData from '@/data/dudi.json';
+import usersData from '@/data/users.json';
 
 export default function KonfigurasiPage() {
   const router = useRouter();

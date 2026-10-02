@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import usersData from '../../data/users.json';
+import usersData from '@/data/users.json';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
