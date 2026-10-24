@@ -51,38 +51,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex-1 overflow-y-auto p-12 flex flex-col">
           {children}
         </div>
-        
-        {/* Yellow Footer Banner with Marquee */}
-        <div className="bg-[#EFEF5B] h-[44px] w-full overflow-hidden flex items-center flex-shrink-0">
-          <div className="flex animate-marquee whitespace-nowrap">
-            {[...Array(3)].map((_, setIndex) => (
-              <div key={setIndex} className="flex items-center">
-                {['/pngegg.png', '/pngegg (1).png', '/pngegg (2).png', '/pngegg (3).png'].map((src, idx) => (
-                  <div key={idx} className="mx-8 flex items-center justify-center">
-                    <img src={src} alt={`Sponsor ${idx}`} className="h-[32px] w-auto object-contain max-w-[180px]" />
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
       </main>
-
-      {/* Global CSS for Marquee Animation */}
-      <style jsx global>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-33.333333%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 15s linear infinite;
-          width: max-content;
-        }
-      `}</style>
     </div>
   );
 }
