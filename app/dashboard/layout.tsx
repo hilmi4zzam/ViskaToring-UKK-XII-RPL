@@ -1,13 +1,31 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import usersData from '@/data/users.json';
+import { usePathname, useRouter } from 'next/navigation';
+import { getStoredUser, fetchCurrentUser } from '@/supabase/auth';
+import { User } from '@/supabase/types';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const user = usersData[0] || { namaAkun: 'Mohamad Hilmi Azzam' };
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const stored = getStoredUser();
+      if (!stored) {
+        router.push('/login');
+        return;
+      }
+
+      const fresh = await fetchCurrentUser();
+      setUser(fresh || stored);
+    };
+
+    void loadUser();
+  }, [router]);
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -34,8 +52,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* User Info & Settings */}
         <div className="flex flex-col mt-auto pt-8 items-center w-full">
-          <div className="bg-[#000066] w-[85%] text-white text-[15px] font-medium pt-3 pb-6 rounded-t-xl text-center">
-            {user.namaAkun}
+          <div className="bg-[#000066] w-[85%] text-white text-[15px] font-medium pt-3 pb-6 rounded-t-xl text-center truncate px-3">
+            {user?.username || 'Memuat Siswa...'}
           </div>
           <Link href="/dashboard/pengaturan" className="w-full bg-white text-black text-[16px] font-medium py-3.5 rounded-xl text-center flex items-center justify-center gap-2.5 shadow-sm hover:bg-gray-50 transition-colors -mt-3 relative z-10">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
