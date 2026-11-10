@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const loadUser = async () => {
       const stored = getStoredUser();
       if (!stored) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 

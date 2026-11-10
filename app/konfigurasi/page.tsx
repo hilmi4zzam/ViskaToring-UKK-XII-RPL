@@ -24,7 +24,7 @@ export default function KonfigurasiPage() {
   useEffect(() => {
     const user = getStoredUser();
     if (!user) {
-      router.push('/login');
+      router.push('/');
       return;
     }
     async function loadCompanies() {
@@ -138,7 +138,7 @@ export default function KonfigurasiPage() {
       
       {/* Back Button */}
       <div className="absolute top-8 left-8 md:top-12 md:left-12">
-        <Link href="/login" className="text-black hover:text-gray-600 transition-colors">
+        <Link href="/" className="text-black hover:text-gray-600 transition-colors">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>

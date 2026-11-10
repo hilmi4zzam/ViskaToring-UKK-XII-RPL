@@ -27,7 +27,7 @@ export default function PengaturanPage() {
   useEffect(() => {
     const user = getStoredUser();
     if (!user) {
-      router.push('/login');
+      router.push('/');
       return;
     }
     async function loadData() {
@@ -141,7 +141,7 @@ export default function PengaturanPage() {
 
   const handleLogout = () => {
     clearStoredUser();
-    router.push('/login');
+    router.push('/');
   };
   
   const showOldPassword = isNewPasswordFocused || newPassword.length > 0;
