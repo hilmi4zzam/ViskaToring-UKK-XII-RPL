@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, isFirstLogin } from '@/supabase/auth';
+import { Company, User } from '@/supabase/types';
 
 export default function HomePage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -22,11 +23,11 @@ export default function HomePage() {
 
   const router = useRouter();
 
-  // Otomatis arahkan ke dashboard jika pengguna sudah login sebelumnya
+  // Otomatis arahkan jika pengguna sudah login sebelumnya
   useEffect(() => {
     const user = getStoredUser();
     if (user) {
-      if (!user.company_id) {
+      if (isFirstLogin(user)) {
         router.replace('/konfigurasi');
       } else {
         router.replace('/dashboard');
@@ -47,7 +48,7 @@ export default function HomePage() {
     try {
       const { data: user, error: queryError } = await supabase
         .from('user_accounts')
-        .select('id, username, company_id')
+        .select('id, username, password, company_id, company, role, first_login, companies(*)')
         .eq('username', username.trim())
         .eq('password', password)
         .maybeSingle();
@@ -59,24 +60,36 @@ export default function HomePage() {
           details: queryError.details,
           hint: queryError.hint,
         });
-        setError('Gagal mengakses data akun. Periksa policy SELECT tabel user_accounts untuk role anon.');
+        setError('Gagal mengakses data akun dari Supabase (' + queryError.message + '). Pastikan tabel dan policy RLS sudah sesuai.');
         return;
       }
 
       if (user) {
-        setStoredUser(user);
-        if (!user.company_id) {
+        const loggedUser: User = {
+          id: user.id,
+          username: user.username,
+          company_id: user.company_id ?? null,
+          company: user.company ?? null,
+          role: user.role || 'siswa',
+          first_login: user.first_login ?? true,
+          companies: (Array.isArray(user.companies) ? user.companies[0] : user.companies) as Company | null,
+        };
+
+        setStoredUser(loggedUser);
+
+        // Jika terdeteksi sebagai login pertama kali (first_login = true atau company belum ditentukan)
+        if (isFirstLogin(loggedUser)) {
           router.push('/konfigurasi');
         } else {
           router.push('/dashboard');
         }
       } else {
-        console.warn('Login returned no matching user. If the account exists in Supabase Table Editor, check the user_accounts SELECT policy for role anon.');
-        setError('Akun tidak ditemukan. Jika data ada di Supabase, periksa policy SELECT tabel user_accounts untuk role anon.');
+        setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setError('Terjadi kesalahan koneksi ke Supabase');
+      const errMsg = err instanceof Error ? err.message : 'Terjadi kesalahan koneksi ke Supabase';
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
@@ -98,8 +111,10 @@ export default function HomePage() {
         .insert({
           username: regUsername.trim(),
           password: regPassword,
+          role: 'siswa',
+          first_login: true,
         })
-        .select('id, username, company_id')
+        .select('id, username, company_id, company, role, first_login')
         .single();
 
       if (regErr) {
@@ -118,16 +133,27 @@ export default function HomePage() {
       }
 
       if (newUser) {
-        setStoredUser(newUser);
+        const createdUser: User = {
+          id: newUser.id,
+          username: newUser.username,
+          company_id: newUser.company_id ?? null,
+          company: newUser.company ?? null,
+          role: newUser.role || 'siswa',
+          first_login: true,
+          companies: null,
+        };
+
+        setStoredUser(createdUser);
         setRegUsername('');
         setRegPassword('');
         setRegError('');
         setIsRegisterOpen(false);
         router.push('/konfigurasi');
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setRegError('Terjadi kesalahan koneksi ke Supabase');
+      const errMsg = err instanceof Error ? err.message : 'Terjadi kesalahan koneksi ke Supabase';
+      setRegError(errMsg);
     } finally {
       setRegLoading(false);
     }

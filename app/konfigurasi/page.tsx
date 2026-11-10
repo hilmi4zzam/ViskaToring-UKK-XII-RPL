@@ -5,13 +5,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, isFirstLogin } from '@/supabase/auth';
 import { Company, User } from '@/supabase/types';
 
 export default function KonfigurasiPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [dudiQuery, setDudiQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -27,8 +29,10 @@ export default function KonfigurasiPage() {
       router.push('/');
       return;
     }
+
+    setCurrentUser(user);
+
     async function loadCompanies() {
-      setCurrentUser(user);
       setFetchingCompanies(true);
       try {
         const { data, error } = await supabase
@@ -38,6 +42,7 @@ export default function KonfigurasiPage() {
 
         if (error) {
           console.error('Error fetching companies:', error);
+          setErrorMsg('Gagal memuat daftar DUDI dari Supabase: ' + error.message);
         } else if (data) {
           setCompanies(data);
           // Jika user sudah memiliki company_id sebelumnya
@@ -49,14 +54,14 @@ export default function KonfigurasiPage() {
             }
           }
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to load companies:', err);
       } finally {
         setFetchingCompanies(false);
       }
     }
 
-    loadCompanies();
+    void loadCompanies();
   }, [router]);
 
   // Filter list perusahaan berdasarkan input pencarian
@@ -74,37 +79,75 @@ export default function KonfigurasiPage() {
     if (!currentUser) return;
     setErrorMsg('');
 
+    // Validasi 1: Perusahaan DUDI wajib dipilih
     if (!selectedCompany) {
       setErrorMsg('Silakan pilih tempat magang (DUDI) terlebih dahulu.');
+      return;
+    }
+
+    // Validasi 2: Password baru wajib diisi untuk onboarding/keamanan
+    if (!password.trim()) {
+      setErrorMsg('Kata sandi baru wajib diisi demi keamanan akun Anda.');
+      return;
+    }
+
+    if (password.trim().length < 6) {
+      setErrorMsg('Kata sandi baru minimal 6 karakter.');
+      return;
+    }
+
+    if (confirmPassword && password.trim() !== confirmPassword.trim()) {
+      setErrorMsg('Konfirmasi kata sandi tidak cocok.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const updatePayload: { company_id: number; password?: string } = {
+      // Siapkan payload update: set company, password baru, dan first_login = false
+      const updatePayload: {
+        company_id: number;
+        company?: string;
+        password: string;
+        first_login: boolean;
+      } = {
         company_id: selectedCompany.id,
+        company: selectedCompany.company_name,
+        password: password.trim(),
+        first_login: false,
       };
 
-      if (password.trim()) {
-        updatePayload.password = password.trim();
-      }
-
-      const { error } = await supabase
+      // Coba update dengan company_id & company
+      let { error: updateError } = await supabase
         .from('user_accounts')
         .update(updatePayload)
         .eq('id', currentUser.id);
 
-      if (error) {
-        console.error('Update user error:', error);
-        setErrorMsg('Gagal menyimpan konfigurasi akun: ' + error.message);
+      // Jika kolom 'company' (teks) tidak ada di tabel, coba fallback hanya dengan company_id
+      if (updateError && updateError.message.includes('company')) {
+        const fallbackPayload = {
+          company_id: selectedCompany.id,
+          password: password.trim(),
+          first_login: false,
+        };
+        const retry = await supabase
+          .from('user_accounts')
+          .update(fallbackPayload)
+          .eq('id', currentUser.id);
+        updateError = retry.error;
+      }
+
+      if (updateError) {
+        console.error('Update user error:', updateError);
+        setErrorMsg('Gagal menyimpan konfigurasi akun: ' + updateError.message);
         setLoading(false);
         return;
       }
 
+      // Verifikasi pembaharuan data dari Supabase
       const { data: savedUser, error: verifyError } = await supabase
         .from('user_accounts')
-        .select('id, username, company_id')
+        .select('id, username, company_id, role, first_login')
         .eq('id', currentUser.id)
         .single();
 
@@ -115,19 +158,25 @@ export default function KonfigurasiPage() {
         return;
       }
 
-      // Perbarui session user di localStorage
-      setStoredUser({
+      // Perbarui session user di localStorage dengan first_login = false
+      const updatedUserSession: User = {
         ...currentUser,
         id: savedUser.id,
         username: savedUser.username,
         company_id: savedUser.company_id,
+        role: savedUser.role || currentUser.role || 'siswa',
+        first_login: false,
         companies: selectedCompany,
-      });
+      };
 
+      setStoredUser(updatedUserSession);
+
+      // Redirect otomatis ke Dashboard utama
       router.push('/dashboard');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setErrorMsg('Terjadi kesalahan saat menyimpan data ke Supabase');
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan data ke Supabase';
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
@@ -138,7 +187,7 @@ export default function KonfigurasiPage() {
       
       {/* Back Button */}
       <div className="absolute top-8 left-8 md:top-12 md:left-12">
-        <Link href="/" className="text-black hover:text-gray-600 transition-colors">
+        <Link href="/" className="text-black hover:text-gray-600 transition-colors" title="Kembali ke halaman login">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
@@ -146,20 +195,30 @@ export default function KonfigurasiPage() {
         </Link>
       </div>
 
-      <div className="w-full max-w-[420px] px-6">
+      <div className="w-full max-w-[440px] px-6">
         
         {/* Header Logo */}
-        <div className="flex justify-center items-center gap-3 mb-10">
+        <div className="flex justify-center items-center gap-3 mb-6">
           <Image src="/smk.svg" alt="SMK Logo" width={36} height={36} className="w-[36px] h-auto" />
           <h2 className="text-[28px] font-semibold text-black">ViskaToring</h2>
+        </div>
+
+        {/* Informasi Onboarding */}
+        <div className="bg-[#000066]/5 border border-[#000066]/15 rounded-xl p-4 mb-6">
+          <h3 className="text-[15px] font-semibold text-[#000066] mb-1">
+            Konfigurasi Akun Awal
+          </h3>
+          <p className="text-[12px] text-gray-600 leading-relaxed">
+            Demi keamanan, silakan pilih tempat penugasan DUDI Anda dan buat kata sandi baru untuk menggantikan kata sandi default.
+          </p>
         </div>
 
         {/* Form Fields */}
         <div className="w-full">
           
-          {/* Nama Akun (Disabled / Read-only dari Supabase User) */}
-          <div className="mb-6">
-            <label className="block text-[15px] font-medium text-black mb-2">Nama Akun :</label>
+          {/* Nama Akun (Read-only dari Supabase User) */}
+          <div className="mb-5">
+            <label className="block text-[14px] font-medium text-black mb-1.5">Nama Akun :</label>
             <div className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 flex justify-between items-center cursor-not-allowed select-none">
               <span className="text-[14px] text-gray-800 font-medium">
                 {currentUser?.username || 'Memuat akun...'}
@@ -172,37 +231,16 @@ export default function KonfigurasiPage() {
             </div>
           </div>
 
-          {/* Perbarui Kata Sandi */}
-          <div className="mb-6">
-            <label className="block text-[15px] font-medium text-black mb-2">Perbarui Kata Sandi (Opsional) :</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Masukkan kata sandi baru jika ingin mengubah..."
-              className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
-            />
-            {/* Info Text */}
-            <div className="flex items-start gap-[6px] mt-2">
-              <svg className="text-gray-500 mt-[2px] flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              <p className="text-[11px] text-gray-500 leading-snug">
-                Perbarui kata sandi kamu untuk keamanan yang lebih terjaga
-              </p>
-            </div>
-          </div>
-
-          {/* Magang di DUDI */}
-          <div className="mb-8 relative">
-            <label className="block text-[15px] font-medium text-black mb-2">Magang di DUDI :</label>
+          {/* Tempat Magang di DUDI */}
+          <div className="mb-5 relative">
+            <label className="block text-[14px] font-medium text-black mb-1.5">
+              Pilih Tempat Magang (DUDI) <span className="text-red-500">*</span> :
+            </label>
             <div className="relative">
               <input 
                 type="text" 
                 value={dudiQuery}
-                placeholder={fetchingCompanies ? "Memuat data DUDI dari database..." : "Ketik nama perusahaan / DUDI..."}
+                placeholder={fetchingCompanies ? "Memuat data DUDI dari database..." : "Cari nama perusahaan / DUDI..."}
                 onChange={(e) => {
                   setDudiQuery(e.target.value);
                   setSelectedCompany(null);
@@ -240,25 +278,75 @@ export default function KonfigurasiPage() {
               )}
             </div>
           </div>
+
+          {/* Buat Kata Sandi Baru */}
+          <div className="mb-5">
+            <label className="block text-[14px] font-medium text-black mb-1.5">
+              Buat Kata Sandi Baru <span className="text-red-500">*</span> :
+            </label>
+            <div className="relative flex items-center">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimal 6 karakter..."
+                className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 pr-10 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+              />
+              <button 
+                type="button"
+                className="absolute right-3 text-gray-600 hover:text-black transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Konfirmasi Kata Sandi Baru */}
+          <div className="mb-6">
+            <label className="block text-[14px] font-medium text-black mb-1.5">
+              Konfirmasi Kata Sandi Baru :
+            </label>
+            <input 
+              type={showPassword ? "text" : "password"} 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Ulangi kata sandi baru..."
+              className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+            />
+          </div>
           
-          {errorMsg && <p className="text-red-500 text-sm mb-4">{errorMsg}</p>}
+          {errorMsg && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3 mb-5">
+              {errorMsg}
+            </div>
+          )}
 
           <hr className="border-gray-300 mb-6" />
 
-          {/* Button Masuk */}
+          {/* Button Simpan & Masuk ke Dashboard */}
           <button 
             type="button"
             onClick={handleMasuk}
             disabled={loading}
-            className="w-full bg-[#000066] text-white rounded-xl py-3 text-[16px] font-medium hover:bg-[#000044] disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-[#000066] text-white rounded-xl py-3.5 text-[16px] font-medium hover:bg-[#000044] disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             {loading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Menyimpan...</span>
+                <span>Menyimpan & Menyiapkan Akun...</span>
               </>
             ) : (
-              'Masuk'
+              'Simpan & Lanjut ke Dashboard'
             )}
           </button>
         </div>

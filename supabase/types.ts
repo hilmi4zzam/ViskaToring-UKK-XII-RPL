@@ -9,10 +9,13 @@ export interface Company {
 }
 
 export interface User {
-  id: string; // UUID
+  id: string; // UUID / ID
   username: string;
   password?: string;
   company_id: number | null;
+  company?: string | null;
+  role: string;
+  first_login: boolean;
   companies?: Company | null;
 }
 
