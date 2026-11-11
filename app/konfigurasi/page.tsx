@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser, isFirstLogin } from '@/supabase/auth';
+import { getStoredUser, setStoredUser } from '@/supabase/auth';
 import { Company, User } from '@/supabase/types';
 
 export default function KonfigurasiPage() {
@@ -22,6 +22,8 @@ export default function KonfigurasiPage() {
   const [fetchingCompanies, setFetchingCompanies] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const isSiswa = !currentUser?.role || currentUser.role === 'siswa';
+
   // Cek user login dan ambil daftar companies dari Supabase
   useEffect(() => {
     const user = getStoredUser();
@@ -32,6 +34,7 @@ export default function KonfigurasiPage() {
 
     setCurrentUser(user);
 
+    // Hanya ambil daftar DUDI jika pengguna adalah siswa
     async function loadCompanies() {
       setFetchingCompanies(true);
       try {
@@ -79,9 +82,9 @@ export default function KonfigurasiPage() {
     if (!currentUser) return;
     setErrorMsg('');
 
-    // Validasi 1: Perusahaan DUDI wajib dipilih
-    if (!selectedCompany) {
-      setErrorMsg('Silakan pilih tempat magang (DUDI) terlebih dahulu.');
+    // Validasi 1: Siswa wajib memilih DUDI
+    if (isSiswa && !selectedCompany) {
+      setErrorMsg('Sebagai siswa, silakan pilih tempat penugasan magang (DUDI) terlebih dahulu.');
       return;
     }
 
@@ -104,38 +107,26 @@ export default function KonfigurasiPage() {
     setLoading(true);
 
     try {
-      // Siapkan payload update: set company, password baru, dan first_login = false
+      // Siapkan payload update: password baru dan first_login = false
       const updatePayload: {
-        company_id: number;
-        company?: string;
         password: string;
         first_login: boolean;
+        company_id?: number;
       } = {
-        company_id: selectedCompany.id,
-        company: selectedCompany.company_name,
         password: password.trim(),
         first_login: false,
       };
 
-      // Coba update dengan company_id & company
-      let { error: updateError } = await supabase
+      // Siswa mengupdate company_id
+      if (selectedCompany) {
+        updatePayload.company_id = selectedCompany.id;
+      }
+
+      // Update langsung ke Supabase
+      const { error: updateError } = await supabase
         .from('user_accounts')
         .update(updatePayload)
         .eq('id', currentUser.id);
-
-      // Jika kolom 'company' (teks) tidak ada di tabel, coba fallback hanya dengan company_id
-      if (updateError && updateError.message.includes('company')) {
-        const fallbackPayload = {
-          company_id: selectedCompany.id,
-          password: password.trim(),
-          first_login: false,
-        };
-        const retry = await supabase
-          .from('user_accounts')
-          .update(fallbackPayload)
-          .eq('id', currentUser.id);
-        updateError = retry.error;
-      }
 
       if (updateError) {
         console.error('Update user error:', updateError);
@@ -166,7 +157,7 @@ export default function KonfigurasiPage() {
         company_id: savedUser.company_id,
         role: savedUser.role || currentUser.role || 'siswa',
         first_login: false,
-        companies: selectedCompany,
+        companies: selectedCompany || currentUser.companies || null,
       };
 
       setStoredUser(updatedUserSession);
@@ -179,6 +170,18 @@ export default function KonfigurasiPage() {
       setErrorMsg(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getRoleBadge = (role?: string) => {
+    switch (role) {
+      case 'admin':
+        return <span className="bg-purple-100 text-purple-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">Admin</span>;
+      case 'guru':
+        return <span className="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-0.5 rounded-full font-semibold">Guru Pembimbing</span>;
+      case 'siswa':
+      default:
+        return <span className="bg-blue-100 text-[#000066] text-xs px-2.5 py-0.5 rounded-full font-semibold">Siswa Magang</span>;
     }
   };
 
@@ -205,11 +208,16 @@ export default function KonfigurasiPage() {
 
         {/* Informasi Onboarding */}
         <div className="bg-[#000066]/5 border border-[#000066]/15 rounded-xl p-4 mb-6">
-          <h3 className="text-[15px] font-semibold text-[#000066] mb-1">
-            Konfigurasi Akun Awal
-          </h3>
+          <div className="flex items-center justify-between mb-1.5">
+            <h3 className="text-[15px] font-semibold text-[#000066]">
+              Aktivasi Akun Pertama Kali
+            </h3>
+            {getRoleBadge(currentUser?.role)}
+          </div>
           <p className="text-[12px] text-gray-600 leading-relaxed">
-            Demi keamanan, silakan pilih tempat penugasan DUDI Anda dan buat kata sandi baru untuk menggantikan kata sandi default.
+            {isSiswa 
+              ? 'Selamat datang! Sebagai siswa magang, silakan pilih tempat penugasan DUDI Anda dan perbarui kata sandi default demi keamanan akun.'
+              : 'Selamat datang! Akun Anda telah ditambahkan oleh Admin. Silakan perbarui kata sandi awal Anda demi keamanan akun sebelum melanjutkan.'}
           </p>
         </div>
 
@@ -231,53 +239,55 @@ export default function KonfigurasiPage() {
             </div>
           </div>
 
-          {/* Tempat Magang di DUDI */}
-          <div className="mb-5 relative">
-            <label className="block text-[14px] font-medium text-black mb-1.5">
-              Pilih Tempat Magang (DUDI) <span className="text-red-500">*</span> :
-            </label>
-            <div className="relative">
-              <input 
-                type="text" 
-                value={dudiQuery}
-                placeholder={fetchingCompanies ? "Memuat data DUDI dari database..." : "Cari nama perusahaan / DUDI..."}
-                onChange={(e) => {
-                  setDudiQuery(e.target.value);
-                  setSelectedCompany(null);
-                  setShowDropdown(true);
-                }}
-                onFocus={() => setShowDropdown(true)}
-                className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all relative z-10"
-              />
-              
-              {/* Dropdown Suggestions */}
-              {showDropdown && dudiQuery && (
-                <div className="absolute top-full left-0 w-full mt-2 z-20 shadow-lg">
-                  <div className="flex flex-col gap-[6px] max-h-[160px] overflow-y-auto pr-2 bg-white rounded-xl p-2 border border-gray-200 custom-scrollbar">
-                    {filteredDudi.length > 0 ? (
-                      filteredDudi.map((comp) => (
-                        <div 
-                          key={comp.id}
-                          onClick={() => handleSelectDudi(comp)}
-                          className={`w-full rounded-lg px-4 py-[10px] text-[13px] cursor-pointer transition-colors border-r-4 ${
-                            selectedCompany?.id === comp.id 
-                              ? 'bg-[#000066]/10 text-[#000066] font-semibold border-[#000066]' 
-                              : 'bg-[#EDEDED] text-gray-700 hover:bg-[#e4e4e4] border-transparent'
-                          }`}
-                        >
-                          {comp.company_name}
+          {/* Tempat Magang di DUDI (Khusus Siswa) */}
+          {isSiswa && (
+            <div className="mb-5 relative">
+              <label className="block text-[14px] font-medium text-black mb-1.5">
+                Pilih Tempat Magang (DUDI) <span className="text-red-500">*</span> :
+              </label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={dudiQuery}
+                  placeholder={fetchingCompanies ? "Memuat data DUDI dari database..." : "Cari nama perusahaan / DUDI..."}
+                  onChange={(e) => {
+                    setDudiQuery(e.target.value);
+                    setSelectedCompany(null);
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                  className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all relative z-10"
+                />
+                
+                {/* Dropdown Suggestions */}
+                {showDropdown && dudiQuery && (
+                  <div className="absolute top-full left-0 w-full mt-2 z-20 shadow-lg">
+                    <div className="flex flex-col gap-[6px] max-h-[160px] overflow-y-auto pr-2 bg-white rounded-xl p-2 border border-gray-200 custom-scrollbar">
+                      {filteredDudi.length > 0 ? (
+                        filteredDudi.map((comp) => (
+                          <div 
+                            key={comp.id}
+                            onClick={() => handleSelectDudi(comp)}
+                            className={`w-full rounded-lg px-4 py-[10px] text-[13px] cursor-pointer transition-colors border-r-4 ${
+                              selectedCompany?.id === comp.id 
+                                ? 'bg-[#000066]/10 text-[#000066] font-semibold border-[#000066]' 
+                                : 'bg-[#EDEDED] text-gray-700 hover:bg-[#e4e4e4] border-transparent'
+                            }`}
+                          >
+                            {comp.company_name}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="w-full bg-[#EDEDED] rounded-lg px-4 py-[10px] text-[13px] text-gray-500 text-center">
+                          {fetchingCompanies ? 'Memuat DUDI...' : 'Tidak ada DUDI yang cocok di database'}
                         </div>
-                      ))
-                    ) : (
-                      <div className="w-full bg-[#EDEDED] rounded-lg px-4 py-[10px] text-[13px] text-gray-500 text-center">
-                        {fetchingCompanies ? 'Memuat DUDI...' : 'Tidak ada DUDI yang cocok di database'}
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Buat Kata Sandi Baru */}
           <div className="mb-5">

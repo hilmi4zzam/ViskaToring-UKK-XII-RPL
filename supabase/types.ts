@@ -1,5 +1,9 @@
 export type StatusKehadiran = 'WFO' | 'WFH' | 'ALPA';
 
+export type UserRole = 'admin' | 'guru' | 'siswa';
+
+export type UserAccountStatus = 'pending' | 'approved' | 'rejected';
+
 export interface Company {
   id: number;
   company_name: string;
@@ -13,8 +17,8 @@ export interface User {
   username: string;
   password?: string;
   company_id: number | null;
-  company?: string | null;
-  role: string;
+  role: UserRole;
+  status: UserAccountStatus;
   first_login: boolean;
   companies?: Company | null;
 }

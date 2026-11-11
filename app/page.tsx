@@ -20,6 +20,7 @@ export default function HomePage() {
   const [regPassword, setRegPassword] = useState('');
   const [regError, setRegError] = useState('');
   const [regLoading, setRegLoading] = useState(false);
+  const [regSuccess, setRegSuccess] = useState(false);
 
   const router = useRouter();
 
@@ -48,7 +49,7 @@ export default function HomePage() {
     try {
       const { data: user, error: queryError } = await supabase
         .from('user_accounts')
-        .select('id, username, password, company_id, company, role, first_login, companies(*)')
+        .select('id, username, password, company_id, role, status, first_login, companies(*)')
         .eq('username', username.trim())
         .eq('password', password)
         .maybeSingle();
@@ -65,19 +66,30 @@ export default function HomePage() {
       }
 
       if (user) {
+        // Cek status persetujuan dari Admin
+        if (user.status === 'pending') {
+          setError('Akun Anda masih dalam proses peninjauan oleh Admin. Anda baru dapat masuk setelah pengajuan disetujui.');
+          return;
+        }
+
+        if (user.status === 'rejected') {
+          setError('Pengajuan akun ini tidak disetujui oleh Admin. Silakan hubungi pihak sekolah.');
+          return;
+        }
+
         const loggedUser: User = {
           id: user.id,
           username: user.username,
           company_id: user.company_id ?? null,
-          company: user.company ?? null,
           role: user.role || 'siswa',
+          status: user.status || 'approved',
           first_login: user.first_login ?? true,
           companies: (Array.isArray(user.companies) ? user.companies[0] : user.companies) as Company | null,
         };
 
         setStoredUser(loggedUser);
 
-        // Jika terdeteksi sebagai login pertama kali (first_login = true atau company belum ditentukan)
+        // Jika terdeteksi sebagai login pertama kali (first_login = true atau company belum ditentukan bagi siswa)
         if (isFirstLogin(loggedUser)) {
           router.push('/konfigurasi');
         } else {
@@ -102,19 +114,26 @@ export default function HomePage() {
       return;
     }
 
+    if (regPassword.length < 6) {
+      setRegError('Kata Sandi minimal 6 karakter');
+      return;
+    }
+
     setRegError('');
     setRegLoading(true);
 
     try {
+      // Pengajuan akun baru: status = 'pending', role default = 'siswa' (akan ditinjau admin)
       const { data: newUser, error: regErr } = await supabase
         .from('user_accounts')
         .insert({
           username: regUsername.trim(),
           password: regPassword,
           role: 'siswa',
+          status: 'pending',
           first_login: true,
         })
-        .select('id, username, company_id, company, role, first_login')
+        .select('id, username, role, status')
         .single();
 
       if (regErr) {
@@ -127,28 +146,14 @@ export default function HomePage() {
         if (regErr.code === '23505') {
           setRegError('Nama Akun ini sudah terdaftar. Silakan gunakan nama lain.');
         } else {
-          setRegError(regErr.message || regErr.details || 'Gagal mendaftarkan akun baru');
+          setRegError(regErr.message || regErr.details || 'Gagal mengajukan akun baru');
         }
         return;
       }
 
       if (newUser) {
-        const createdUser: User = {
-          id: newUser.id,
-          username: newUser.username,
-          company_id: newUser.company_id ?? null,
-          company: newUser.company ?? null,
-          role: newUser.role || 'siswa',
-          first_login: true,
-          companies: null,
-        };
-
-        setStoredUser(createdUser);
-        setRegUsername('');
-        setRegPassword('');
-        setRegError('');
-        setIsRegisterOpen(false);
-        router.push('/konfigurasi');
+        // Tampilkan pesan sukses peninjauan, JANGAN langsung login
+        setRegSuccess(true);
       }
     } catch (err: unknown) {
       console.error(err);
@@ -157,6 +162,14 @@ export default function HomePage() {
     } finally {
       setRegLoading(false);
     }
+  };
+
+  const closeRegisterModal = () => {
+    setIsRegisterOpen(false);
+    setRegSuccess(false);
+    setRegUsername('');
+    setRegPassword('');
+    setRegError('');
   };
 
   return (
@@ -228,7 +241,11 @@ export default function HomePage() {
                   )}
                 </button>
               </div>
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3 mt-3">
+                  {error}
+                </div>
+              )}
             </div>
 
             <hr className="border-gray-300 mb-8" />
@@ -243,7 +260,7 @@ export default function HomePage() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Memeriksa...</span>
+                    <span>Memeriksa Akun...</span>
                   </>
                 ) : (
                   'Masuk'
@@ -267,13 +284,13 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Modal Pengajuan / Registrasi Akun */}
+      {/* Modal Pengajuan Akun Baru */}
       {isRegisterOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 md:p-8 w-full max-w-[420px] shadow-2xl relative">
             <button 
               type="button"
-              onClick={() => setIsRegisterOpen(false)}
+              onClick={closeRegisterModal}
               className="absolute top-4 right-4 text-gray-400 hover:text-black transition-colors"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -282,49 +299,78 @@ export default function HomePage() {
               </svg>
             </button>
 
-            <h3 className="text-[22px] font-semibold text-black mb-1">Pengajuan Akun Baru</h3>
-            <p className="text-[13px] text-gray-500 mb-6">Daftarkan akun siswa magang kamu ke sistem Supabase</p>
-
-            <form onSubmit={handleAccountRequest} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-[14px] font-medium text-black mb-1.5">Nama Akun / Nama Lengkap :</label>
-                <input 
-                  type="text" 
-                  value={regUsername}
-                  onChange={(e) => setRegUsername(e.target.value)}
-                  placeholder="Contoh: Mohamad Hilmi Azzam"
-                  className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
-                />
+            {regSuccess ? (
+              <div className="flex flex-col items-center text-center py-4">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <h3 className="text-[20px] font-semibold text-black mb-2">Pengajuan Akun Terkirim!</h3>
+                <p className="text-[13px] text-gray-600 leading-relaxed mb-6">
+                  Akun <b className="text-black">{regUsername}</b> berhasil diajukan dan sedang <b>menunggu peninjauan & persetujuan dari Admin</b>. Role Anda akan ditentukan oleh Admin sebelum Anda dapat masuk ke sistem.
+                </p>
+                <button 
+                  type="button"
+                  onClick={closeRegisterModal}
+                  className="w-full bg-[#000066] text-white rounded-xl py-3 text-[15px] font-medium hover:bg-[#000044] transition-colors"
+                >
+                  Selesai
+                </button>
               </div>
+            ) : (
+              <>
+                <h3 className="text-[22px] font-semibold text-black mb-1">Pengajuan Akun Baru</h3>
+                <p className="text-[13px] text-gray-500 mb-6">
+                  Daftarkan nama akun Anda. Pengajuan ini akan ditinjau dan role akan ditentukan oleh Admin.
+                </p>
 
-              <div>
-                <label className="block text-[14px] font-medium text-black mb-1.5">Kata Sandi :</label>
-                <input 
-                  type="password" 
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  placeholder="Buat kata sandi akun..."
-                  className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
-                />
-              </div>
+                <form onSubmit={handleAccountRequest} className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-[14px] font-medium text-black mb-1.5">Nama Akun / Nama Lengkap :</label>
+                    <input 
+                      type="text" 
+                      value={regUsername}
+                      onChange={(e) => setRegUsername(e.target.value)}
+                      placeholder="Contoh: Mohamad Hilmi Azzam"
+                      className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+                    />
+                  </div>
 
-              {regError && <p className="text-red-500 text-[13px]">{regError}</p>}
+                  <div>
+                    <label className="block text-[14px] font-medium text-black mb-1.5">Kata Sandi :</label>
+                    <input 
+                      type="password" 
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="Minimal 6 karakter..."
+                      className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+                    />
+                  </div>
 
-              <button 
-                type="submit"
-                disabled={regLoading}
-                className="w-full bg-[#000066] text-white rounded-xl py-3 text-[15px] font-medium hover:bg-[#000044] disabled:bg-gray-400 transition-colors mt-2 flex items-center justify-center gap-2"
-              >
-                {regLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Mendaftarkan...</span>
-                  </>
-                ) : (
-                  'Daftarkan Akun'
-                )}
-              </button>
-            </form>
+                  {regError && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-[13px] rounded-xl p-2.5">
+                      {regError}
+                    </div>
+                  )}
+
+                  <button 
+                    type="submit"
+                    disabled={regLoading}
+                    className="w-full bg-[#000066] text-white rounded-xl py-3 text-[15px] font-medium hover:bg-[#000044] disabled:bg-gray-400 transition-colors mt-2 flex items-center justify-center gap-2"
+                  >
+                    {regLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Mengirim Pengajuan...</span>
+                      </>
+                    ) : (
+                      'Kirim Pengajuan Akun'
+                    )}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

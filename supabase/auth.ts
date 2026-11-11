@@ -1,5 +1,5 @@
 import { supabase } from './client';
-import { Company, User } from './types';
+import { Company, User, UserRole, UserAccountStatus } from './types';
 
 const STORAGE_KEY = 'viskatoring_user_session';
 
@@ -26,14 +26,21 @@ export function clearStoredUser(): void {
 
 /**
  * Cek apakah user perlu melalui tahap Onboarding / Konfigurasi:
- * 1. Jika first_login bernilai true
- * 2. ATAU jika penugasan company belum diset (company_id atau company masih kosong)
+ * - Siswa: Harus konfigurasi jika first_login bernilai true ATAU belum memilih tempat magang (DUDI).
+ * - Admin & Guru: Bukan peserta magang, sehingga TIDAK PERNAH diwajibkan memilih company.
+ *   Mereka hanya masuk konfigurasi jika first_login = true (misal untuk ganti password awal).
  */
 export function isFirstLogin(user: User | null): boolean {
   if (!user) return false;
-  if (user.first_login === true) return true;
-  if (!user.company_id && !user.company) return true;
-  return false;
+
+  if (user.role === 'siswa') {
+    if (user.first_login === true) return true;
+    if (!user.company_id) return true;
+    return false;
+  }
+
+  // Admin dan Guru
+  return user.first_login === true;
 }
 
 export async function fetchCurrentUser(): Promise<User | null> {
@@ -43,7 +50,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
   try {
     const { data, error } = await supabase
       .from('user_accounts')
-      .select('id, username, company_id, company, role, first_login, companies(*)')
+      .select('id, username, company_id, role, status, first_login, companies(*)')
       .eq('id', current.id)
       .maybeSingle();
 
@@ -55,8 +62,8 @@ export async function fetchCurrentUser(): Promise<User | null> {
       id: data.id,
       username: data.username,
       company_id: data.company_id ?? null,
-      company: data.company ?? null,
-      role: data.role || 'siswa',
+      role: (['admin', 'guru', 'siswa'].includes(data.role) ? data.role : 'siswa') as UserRole,
+      status: (['pending', 'approved', 'rejected'].includes(data.status) ? data.status : 'approved') as UserAccountStatus,
       first_login: data.first_login ?? false,
       companies: (Array.isArray(data.companies) ? data.companies[0] : data.companies) as Company | null,
     };
