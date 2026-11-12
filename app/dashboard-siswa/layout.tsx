@@ -20,12 +20,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return;
       }
 
+      if (stored.role === 'guru') {
+        router.replace('/dashboard-guru');
+        return;
+      }
+
       if (isFirstLogin(stored)) {
-        if (stored.role === 'guru') {
-          router.push('/konfigurasi-guru');
-        } else {
-          router.push('/konfigurasi-siswa');
-        }
+        router.push('/konfigurasi-siswa');
         return;
       }
 
