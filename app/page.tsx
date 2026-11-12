@@ -35,7 +35,11 @@ export default function HomePage() {
           router.replace('/konfigurasi-siswa');
         }
       } else {
-        router.replace('/dashboard-siswa');
+        if (user.role === 'guru') {
+          router.replace('/dashboard-guru');
+        } else {
+          router.replace('/dashboard-siswa');
+        }
       }
     }
   }, [router]);
@@ -101,7 +105,11 @@ export default function HomePage() {
             router.push('/konfigurasi-siswa');
           }
         } else {
-          router.push('/dashboard-siswa');
+          if (loggedUser.role === 'guru') {
+            router.push('/dashboard-guru');
+          } else {
+            router.push('/dashboard-siswa');
+          }
         }
       } else {
         setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
