@@ -83,8 +83,8 @@ export default function KonfigurasiGuruPage() {
 
       setStoredUser(updatedUserSession);
 
-      // Redirect otomatis ke Dashboard
-      router.push('/dashboard-siswa');
+      // Redirect otomatis ke Dashboard Guru
+      router.push('/dashboard-guru');
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan data ke Supabase';

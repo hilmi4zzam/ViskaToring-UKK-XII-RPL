@@ -86,10 +86,14 @@ export default function DashboardGuruPage() {
   }, []);
 
   useEffect(() => {
-    const user = getStoredUser();
-    if (user) {
-      void loadData(user);
-    }
+    const init = async () => {
+      const user = getStoredUser();
+      if (user) {
+        await loadData(user);
+      }
+    };
+
+    void init();
   }, [loadData]);
 
   // Format jam dengan tanda titik (misal: 08.25)
@@ -181,3 +185,4 @@ export default function DashboardGuruPage() {
     </div>
   );
 }
+
