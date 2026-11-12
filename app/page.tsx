@@ -18,6 +18,7 @@ export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [regError, setRegError] = useState('');
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
@@ -185,6 +186,7 @@ export default function HomePage() {
     setRegSuccess(false);
     setRegUsername('');
     setRegPassword('');
+    setShowRegPassword(false);
     setRegError('');
   };
 
@@ -238,21 +240,21 @@ export default function HomePage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Masukkan kata sandi..."
-                  className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 pr-10 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+                  className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 pr-12 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
                 />
                 <button 
                   type="button"
-                  className="absolute right-3 text-gray-600 hover:text-black transition-colors"
+                  className="absolute right-4 text-gray-600 hover:text-black transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" />
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   ) : (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" />
                     </svg>
                   )}
                 </button>
@@ -322,9 +324,9 @@ export default function HomePage() {
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </div>
-                <h3 className="text-[20px] font-semibold text-black mb-2">Pengajuan Akun Terkirim!</h3>
+                <b className="text-[20px] font-semibold text-black mb-2">Pengajuan Akun Terkirim!</b>
                 <p className="text-[13px] text-gray-600 leading-relaxed mb-6">
-                  Akun <b className="text-black">{regUsername}</b> berhasil diajukan dan sedang <b>menunggu peninjauan & persetujuan dari Admin</b>. Role Anda akan ditentukan oleh Admin sebelum Anda dapat masuk ke sistem.
+                  Akun <b className="text-black">{regUsername}</b> berhasil diajukan dan sedang <b>menunggu peninjauan & persetujuan dari Admin</b>.
                 </p>
                 <button 
                   type="button"
@@ -338,7 +340,7 @@ export default function HomePage() {
               <>
                 <h3 className="text-[22px] font-semibold text-black mb-1">Pengajuan Akun Baru</h3>
                 <p className="text-[13px] text-gray-500 mb-6">
-                  Daftarkan nama akun Anda. Pengajuan ini akan ditinjau dan role akan ditentukan oleh Admin.
+                  Daftarkan nama akun Anda.
                 </p>
 
                 <form onSubmit={handleAccountRequest} className="flex flex-col gap-4">
@@ -355,13 +357,31 @@ export default function HomePage() {
 
                   <div>
                     <label className="block text-[14px] font-medium text-black mb-1.5">Kata Sandi :</label>
-                    <input 
-                      type="password" 
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      placeholder="Minimal 6 karakter..."
-                      className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
-                    />
+                    <div className="relative flex items-center">
+                      <input 
+                        type={showRegPassword ? "text" : "password"} 
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        placeholder="Minimal 6 karakter..."
+                        className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 pr-12 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+                      />
+                      <button 
+                        type="button"
+                        className="absolute right-4 text-gray-600 hover:text-black transition-colors"
+                        onClick={() => setShowRegPassword(!showRegPassword)}
+                      >
+                        {showRegPassword ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {regError && (

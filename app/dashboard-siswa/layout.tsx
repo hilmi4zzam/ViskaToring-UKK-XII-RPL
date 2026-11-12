@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="bg-[#000066] w-[85%] text-white text-[15px] font-medium pt-3 pb-6 rounded-t-xl text-center px-3">
             <div className="truncate font-semibold">{user?.username || 'Memuat User...'}</div>
             <div className="text-[11px] text-gray-300 font-normal">
-              {user?.role === 'guru' ? 'Guru Pembimbing' : user?.role === 'admin' ? 'Administrator' : 'Siswa Magang'}
+              {user?.role === 'guru' ? 'Guru Pembimbing' : user?.role === 'admin' ? 'Administrator' : 'Siswa'}
             </div>
           </div>
           <Link href="/dashboard-siswa/pengaturan" className="w-full bg-white text-black text-[16px] font-medium py-3.5 rounded-xl text-center flex items-center justify-center gap-2.5 shadow-sm hover:bg-gray-50 transition-colors -mt-3 relative z-10">
