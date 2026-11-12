@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase/client';
 import { getStoredUser } from '@/supabase/auth';
-import { Attendance, Company } from '@/supabase/types';
+import { Attendance, Company, User } from '@/supabase/types';
 import { getLocalDateString } from '@/supabase/helpers';
 
 interface StudentWithAttendance {
@@ -15,6 +15,7 @@ interface StudentWithAttendance {
 }
 
 export default function DashboardGuruPage() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [students, setStudents] = useState<StudentWithAttendance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,12 +26,27 @@ export default function DashboardGuruPage() {
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[] | null>(null);
   const [tempSelectedStudentIds, setTempSelectedStudentIds] = useState<string[]>([]);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (guruUser: User) => {
     setLoading(true);
     const today = getLocalDateString();
 
     try {
-      // 1. Ambil seluruh user account dengan role siswa
+      // 1. Ambil data guru untuk memuat kolom 'selected' tersimpan
+      try {
+        const { data: guruData } = await supabase
+          .from('user_accounts')
+          .select('selected')
+          .eq('id', guruUser.id)
+          .maybeSingle();
+
+        if (guruData && Array.isArray(guruData.selected)) {
+          setSelectedStudentIds(guruData.selected);
+        }
+      } catch (err) {
+        console.warn('Kolom selected mungkin belum dibuat di database:', err);
+      }
+
+      // 2. Ambil seluruh user account dengan role siswa
       const { data: studentList, error: sErr } = await supabase
         .from('user_accounts')
         .select('id, username, company_id, companies(*)')
@@ -49,7 +65,7 @@ export default function DashboardGuruPage() {
         return;
       }
 
-      // 2. Ambil absensi hari ini untuk para siswa
+      // 3. Ambil absensi hari ini untuk para siswa
       const studentIds = studentList.map((s) => s.id);
       const { data: attList, error: aErr } = await supabase
         .from('attendances')
@@ -87,7 +103,8 @@ export default function DashboardGuruPage() {
     const init = async () => {
       const user = getStoredUser();
       if (user) {
-        await loadData();
+        setCurrentUser(user);
+        await loadData(user);
       }
     };
 
@@ -115,10 +132,22 @@ export default function DashboardGuruPage() {
     );
   };
 
-  // Simpan filter dari pop up
-  const handleSaveFilter = () => {
+  // Simpan filter dari pop up dan simpan ke database (kolom selected akun guru)
+  const handleSaveFilter = async () => {
     setSelectedStudentIds(tempSelectedStudentIds);
     setShowFilterModal(false);
+
+    const user = currentUser || getStoredUser();
+    if (user) {
+      try {
+        await supabase
+          .from('user_accounts')
+          .update({ selected: tempSelectedStudentIds })
+          .eq('id', user.id);
+      } catch (err) {
+        console.error('Gagal menyimpan selected students ke database:', err);
+      }
+    }
   };
 
   // Siswa yang ditampilkan di dalam modal pop up (berdasarkan modalSearch)
@@ -185,9 +214,9 @@ export default function DashboardGuruPage() {
       {/* Modal Pop Up Filter Siswa */}
       {showFilterModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-[1px]">
-          <div className="bg-[#EDEDED] rounded-[28px] p-6 max-w-[420px] w-full shadow-2xl relative border border-gray-300">
+          <div className="bg-[#EDEDED] rounded-[28px] p-6 w-[430px] max-w-full h-[540px] flex flex-col shadow-2xl relative border border-gray-300">
             {/* Header: Tombol Kembali */}
-            <div className="mb-4">
+            <div className="mb-4 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowFilterModal(false)}
@@ -201,13 +230,13 @@ export default function DashboardGuruPage() {
             </div>
 
             {/* Input Search di dalam Pop Up */}
-            <div className="relative mb-5">
+            <div className="relative mb-5 shrink-0">
               <input
                 type="text"
                 value={modalSearch}
                 onChange={(e) => setModalSearch(e.target.value)}
-                placeholder=""
-                className="w-full bg-[#EDEDED] border border-gray-400 rounded-xl py-2.5 pl-4 pr-11 text-[15px] text-black outline-none focus:border-[#000066] transition-colors"
+                placeholder="Cari siswa yang sedang di bimbing..."
+                className="w-full bg-[#EDEDED] border border-gray-400 rounded-xl py-2.5 pl-4 pr-11 text-[15px] text-black outline-none focus:border-[#000066] transition-colors placeholder:text-gray-500"
                 autoFocus
               />
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-black">
@@ -219,10 +248,10 @@ export default function DashboardGuruPage() {
             </div>
 
             {/* Daftar Siswa */}
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#000066]/40 [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="space-y-3 flex-1 overflow-y-auto pr-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#000066]/40 [&::-webkit-scrollbar-thumb]:rounded-full">
               {modalFilteredStudents.length === 0 ? (
-                <div className="text-center py-10 text-gray-500 text-[14px]">
-                  Tidak ada siswa ditemukan.
+                <div className="h-full flex items-center justify-center text-center py-10 text-gray-500 text-[14px]">
+                  Siswa tidak ditemukan.
                 </div>
               ) : (
                 modalFilteredStudents.map((item) => {
@@ -236,13 +265,12 @@ export default function DashboardGuruPage() {
                       <span className="text-[14px] text-black font-normal truncate mr-3">
                         {item.username} - {item.companies?.company_name || 'Belum ada DUDI'}
                       </span>
-                      <div
-                        className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors ${
-                          isSelected
-                            ? 'bg-[#000066]'
-                            : 'border-[2.5px] border-[#000066] bg-transparent'
-                        }`}
-                      />
+                      {/* Checkbox Icon (kiri non selected, kanan selected) */}
+                      <div className="w-6 h-6 rounded-md border-2 border-[#000066] bg-white flex items-center justify-center shrink-0">
+                        {isSelected && (
+                          <div className="w-3 h-3 bg-[#000066] rounded-[2.5px]" />
+                        )}
+                      </div>
                     </div>
                   );
                 })
@@ -250,7 +278,7 @@ export default function DashboardGuruPage() {
             </div>
 
             {/* Tombol Simpan */}
-            <div className="mt-7 flex justify-end">
+            <div className="mt-5 flex justify-end shrink-0">
               <button
                 type="button"
                 onClick={handleSaveFilter}

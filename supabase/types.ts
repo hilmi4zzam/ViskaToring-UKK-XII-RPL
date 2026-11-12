@@ -20,6 +20,7 @@ export interface User {
   role: UserRole;
   status: UserAccountStatus;
   first_login: boolean;
+  selected?: string[] | null;
   companies?: Company | null;
 }
 
