@@ -303,6 +303,7 @@ export default function DashboardBeranda() {
 
   const isSudahMasuk = Boolean(todayAttendance?.jam_masuk);
   const isSudahPulang = Boolean(todayAttendance?.jam_pulang);
+  const todayReport = todayAttendance?.reports && todayAttendance.reports.length > 0 ? todayAttendance.reports[0] : null;
 
   return (
     <div className="w-full max-w-[940px] mx-auto flex flex-col gap-8">
@@ -326,37 +327,86 @@ export default function DashboardBeranda() {
       {/* Middle Content Row */}
       <div className="flex gap-8 flex-1 min-h-[380px]">
         
-        {/* Left: Pratinjau Absensi Hari Ini */}
-        <div className="flex-1 bg-[#F0F0F0] rounded-[24px] flex flex-col items-center justify-center p-10 text-center">
-          <div className={`w-[84px] h-[84px] rounded-full flex items-center justify-center mb-8 text-white shadow-md transition-colors ${
-            isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
-          }`}>
-            {isSudahMasuk ? (
-              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
+        {/* Left: Pratinjau Absensi atau Highlight Laporan Absen Pulang */}
+        {isSudahPulang ? (
+          <div className="flex-1 bg-white border border-gray-300 rounded-[24px] p-8 flex flex-col justify-between shadow-sm">
+            <div>
+              {/* Header Highlight */}
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#299946]"></span>
+                  <span className="text-[14px] font-semibold text-gray-800">
+                    Laporan Absensi Pulang
+                  </span>
+                </div>
+                <span className="text-[12px] bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-full border border-emerald-200">
+                  {todayAttendance?.status_kehadiran} • {formatTimeOnly(todayAttendance?.jam_pulang)}
+                </span>
+              </div>
+
+              {/* Judul Kegiatan */}
+              <h3 className="text-[18px] font-semibold text-black mb-2 line-clamp-1">
+                {todayReport?.judul_laporan || 'Laporan Harian'}
+              </h3>
+
+              {/* Deskripsi Kegiatan */}
+              <p className="text-[14px] text-gray-600 leading-relaxed mb-4 line-clamp-3">
+                {todayReport?.deskripsi_laporan || 'Tidak ada deskripsi laporan kegiatan.'}
+              </p>
+            </div>
+
+            {/* Foto Bukti Kegiatan (jika ada) */}
+            {todayReport?.bukti_laporan ? (
+              <div className="mt-auto pt-2">
+                <p className="text-[12px] text-gray-500 mb-1.5 font-medium">Foto Bukti Kegiatan :</p>
+                <div className="relative w-full h-[140px] rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={todayReport.bukti_laporan} 
+                    alt="Bukti Laporan" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
             ) : (
-              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+              <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-[12px] text-gray-400">
+                <span>Masuk: {formatTimeOnly(todayAttendance?.jam_masuk)}</span>
+                <span>Pulang: {formatTimeOnly(todayAttendance?.jam_pulang)}</span>
+              </div>
             )}
           </div>
-          <p className="text-[18px] font-medium text-black leading-snug">
-            {isSudahMasuk ? (
-              <>
-                Sudah Absensi Masuk<br/>
-                <span className="text-[14px] text-gray-600 font-normal">
-                  Pukul {formatTimeOnly(todayAttendance?.jam_masuk)} ({todayAttendance?.status_kehadiran})
-                </span>
-              </>
-            ) : (
-              <>
-                Pratinjau Absensi<br/>Pada Hari Ini
-              </>
-            )}
-          </p>
-        </div>
+        ) : (
+          <div className="flex-1 bg-[#F0F0F0] rounded-[24px] flex flex-col items-center justify-center p-10 text-center">
+            <div className={`w-[84px] h-[84px] rounded-full flex items-center justify-center mb-8 text-white shadow-md transition-colors ${
+              isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
+            }`}>
+              {isSudahMasuk ? (
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              ) : (
+                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              )}
+            </div>
+            <p className="text-[18px] font-medium text-black leading-snug">
+              {isSudahMasuk ? (
+                <>
+                  Sudah Absensi Masuk<br/>
+                  <span className="text-[14px] text-gray-600 font-normal">
+                    Pukul {formatTimeOnly(todayAttendance?.jam_masuk)} ({todayAttendance?.status_kehadiran})
+                  </span>
+                </>
+              ) : (
+                <>
+                  Pratinjau Absensi<br/>Pada Hari Ini
+                </>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Right: Absen Actions */}
         <div className="flex-1 bg-white border border-gray-300 rounded-[24px] p-8 flex flex-col gap-7 shadow-sm">
@@ -392,14 +442,16 @@ export default function DashboardBeranda() {
               {currentTime}
             </div>
             <button 
+              disabled={isSudahMasuk && isSudahPulang}
               onClick={() => {
+                if (isSudahMasuk && isSudahPulang) return;
                 setAbsenError('');
                 setIsModalOpen(true);
                 if (absenType === 'masuk') {
                   detectLocation();
                 }
               }}
-              className="w-full bg-white text-black text-[16px] font-medium py-4 rounded-xl shadow-sm hover:bg-gray-50 transition-colors"
+              className="w-full bg-white text-black text-[16px] font-medium py-4 rounded-xl shadow-sm disabled:cursor-not-allowed"
             >
               {isSudahMasuk && isSudahPulang ? 'Absensi Lengkap' : 'Absen Sekarang'}
             </button>
