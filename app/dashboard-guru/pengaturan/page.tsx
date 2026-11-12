@@ -12,6 +12,7 @@ export default function PengaturanGuruPage() {
 
   const [newPassword, setNewPassword] = useState("");
   const [isNewPasswordFocused, setIsNewPasswordFocused] = useState(false);
+  const [isOldPasswordFocused, setIsOldPasswordFocused] = useState(false);
   const [showOldPassPassword, setShowOldPassPassword] = useState(false);
   const [showNewPassPassword, setShowNewPassPassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
@@ -101,7 +102,7 @@ export default function PengaturanGuruPage() {
     router.push('/');
   };
   
-  const showOldPassword = isNewPasswordFocused || newPassword.length > 0;
+  const showOldPassword = isNewPasswordFocused || isOldPasswordFocused || newPassword.length > 0 || oldPassword.length > 0;
 
   return (
     <div className="w-full max-w-[480px] mx-auto flex flex-col gap-5 pt-8 pb-10">
@@ -117,75 +118,84 @@ export default function PengaturanGuruPage() {
         </div>
       )}
 
-      {/* Nama Akun (Read-only) */}
+      {/* Nama Akun */}
       <div className="flex flex-col gap-2">
         <label className="text-[15px] font-medium text-black">Nama Akun :</label>
-        <div className="w-full bg-[#EDEDED] text-black text-[15px] py-3.5 px-4 rounded-xl flex justify-between items-center cursor-not-allowed select-none">
-          <span className="font-medium text-gray-800">{currentUser?.username || "Memuat..."}</span>
-          <svg className="text-gray-500" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C9.243 2 7 4.243 7 7v3H6c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-8c0-1.103-.897-2-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm9 13H6v-8h12v8z"/>
-            <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
-          </svg>
+        <div className="relative">
+          <input 
+            type="text" 
+            value={currentUser?.username || "Memuat akun..."} 
+            readOnly 
+            className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none cursor-not-allowed font-medium"
+          />
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+            </svg>
+          </div>
         </div>
       </div>
 
-      {/* Kata Sandi Lama (Hanya muncul jika input kata sandi baru diisi / difokuskan) */}
-      {showOldPassword && (
-        <div className="flex flex-col gap-2">
-          <label className="text-[15px] font-medium text-black">Kata Sandi Lama :</label>
-          <div className="relative flex items-center">
-            <input 
-              type={showOldPassPassword ? "text" : "password"} 
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              placeholder="Masukkan kata sandi lama..."
-              className="w-full bg-[#F0F0F0] text-black text-[15px] py-3.5 pl-4 pr-12 rounded-xl outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
-            />
-            <button 
-              type="button" 
-              onClick={() => setShowOldPassPassword(!showOldPassPassword)}
-              className="absolute right-4 text-gray-500 hover:text-black transition-colors"
-            >
-              {showOldPassPassword ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Kata Sandi Baru */}
+      {/* Perbarui Kata Sandi */}
       <div className="flex flex-col gap-2">
         <label className="text-[15px] font-medium text-black">Perbarui Kata Sandi :</label>
-        <div className="relative flex items-center">
+        <div className="relative">
           <input 
-            type={showNewPassPassword ? "text" : "password"} 
+            type={showNewPassPassword ? "text" : "password"}
             value={newPassword}
+            placeholder="Ketik kata sandi baru..."
             onChange={(e) => setNewPassword(e.target.value)}
             onFocus={() => setIsNewPasswordFocused(true)}
-            placeholder="Minimal 6 karakter..."
-            className="w-full bg-[#F0F0F0] text-black text-[15px] py-3.5 pl-4 pr-12 rounded-xl outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+            onBlur={() => setIsNewPasswordFocused(false)}
+            className="w-full bg-[#F0F0F0] text-black text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none"
           />
           <button 
-            type="button" 
+            type="button"
             onClick={() => setShowNewPassPassword(!showNewPassPassword)}
-            className="absolute right-4 text-gray-500 hover:text-black transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-black cursor-pointer"
           >
             {showNewPassPassword ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
               </svg>
             ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Kata Sandi Lama (Tampil jika input kata sandi baru diisi) */}
+      <div className={`flex flex-col gap-1.5 transition-all duration-300 overflow-hidden ${showOldPassword ? 'max-h-[100px] opacity-100 mt-1' : 'max-h-0 opacity-0 m-0'}`}>
+        <label className="text-[13px] font-medium text-black px-2">Kata Sandi Lama (Konfirmasi) :</label>
+        <div className="relative w-[96%] ml-[2%]">
+          <input 
+            type={showOldPassPassword ? "text" : "password"}
+            value={oldPassword}
+            placeholder="Masukkan kata sandi saat ini..."
+            onChange={(e) => setOldPassword(e.target.value)}
+            onFocus={() => setIsOldPasswordFocused(true)}
+            onBlur={() => setIsOldPasswordFocused(false)}
+            className="w-full bg-[#F0F0F0] text-black text-[15px] py-2.5 pl-4 pr-10 rounded-xl outline-none"
+          />
+          <button 
+            type="button"
+            onClick={() => setShowOldPassPassword(!showOldPassPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-black cursor-pointer"
+          >
+            {showOldPassPassword ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
               </svg>
             )}
           </button>
