@@ -29,9 +29,13 @@ export default function HomePage() {
     const user = getStoredUser();
     if (user) {
       if (isFirstLogin(user)) {
-        router.replace('/konfigurasi');
+        if (user.role === 'guru') {
+          router.replace('/konfigurasi-guru');
+        } else {
+          router.replace('/konfigurasi-siswa');
+        }
       } else {
-        router.replace('/dashboard');
+        router.replace('/dashboard-siswa');
       }
     }
   }, [router]);
@@ -91,9 +95,13 @@ export default function HomePage() {
 
         // Jika terdeteksi sebagai login pertama kali (first_login = true atau company belum ditentukan bagi siswa)
         if (isFirstLogin(loggedUser)) {
-          router.push('/konfigurasi');
+          if (loggedUser.role === 'guru') {
+            router.push('/konfigurasi-guru');
+          } else {
+            router.push('/konfigurasi-siswa');
+          }
         } else {
-          router.push('/dashboard');
+          router.push('/dashboard-siswa');
         }
       } else {
         setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');

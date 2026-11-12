@@ -21,7 +21,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
 
       if (isFirstLogin(stored)) {
-        router.push('/konfigurasi');
+        if (stored.role === 'guru') {
+          router.push('/konfigurasi-guru');
+        } else {
+          router.push('/konfigurasi-siswa');
+        }
         return;
       }
 
@@ -44,13 +48,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Navigation */}
         <nav className="flex flex-col gap-5 flex-1">
-          <Link href="/dashboard" className={`py-4 px-5 rounded-xl text-[16px] font-medium text-center transition-all ${pathname === '/dashboard' ? 'bg-white text-black shadow-sm' : 'bg-white/50 text-gray-700 hover:bg-white'}`}>
+          <Link href="/dashboard-siswa" className={`py-4 px-5 rounded-xl text-[16px] font-medium text-center transition-all ${pathname === '/dashboard-siswa' ? 'bg-white text-black shadow-sm' : 'bg-white/50 text-gray-700 hover:bg-white'}`}>
             Beranda
           </Link>
-          <Link href="/dashboard/laporan" className={`py-4 px-5 rounded-xl text-[16px] font-medium text-center transition-all ${pathname.startsWith('/dashboard/laporan') ? 'bg-white text-black shadow-sm' : 'bg-white/50 text-gray-700 hover:bg-white'}`}>
+          <Link href="/dashboard-siswa/laporan" className={`py-4 px-5 rounded-xl text-[16px] font-medium text-center transition-all ${pathname.startsWith('/dashboard-siswa/laporan') ? 'bg-white text-black shadow-sm' : 'bg-white/50 text-gray-700 hover:bg-white'}`}>
             Lihat Laporan
           </Link>
-          <Link href="/dashboard/berita" className={`py-4 px-5 rounded-xl text-[16px] font-medium text-center transition-all ${pathname.startsWith('/dashboard/berita') ? 'bg-white text-black shadow-sm' : 'bg-white/50 text-gray-700 hover:bg-white'}`}>
+          <Link href="/dashboard-siswa/berita" className={`py-4 px-5 rounded-xl text-[16px] font-medium text-center transition-all ${pathname.startsWith('/dashboard-siswa/berita') ? 'bg-white text-black shadow-sm' : 'bg-white/50 text-gray-700 hover:bg-white'}`}>
             Berita Anak PKL
           </Link>
         </nav>
@@ -63,7 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {user?.role === 'guru' ? 'Guru Pembimbing' : user?.role === 'admin' ? 'Administrator' : 'Siswa Magang'}
             </div>
           </div>
-          <Link href="/dashboard/pengaturan" className="w-full bg-white text-black text-[16px] font-medium py-3.5 rounded-xl text-center flex items-center justify-center gap-2.5 shadow-sm hover:bg-gray-50 transition-colors -mt-3 relative z-10">
+          <Link href="/dashboard-siswa/pengaturan" className="w-full bg-white text-black text-[16px] font-medium py-3.5 rounded-xl text-center flex items-center justify-center gap-2.5 shadow-sm hover:bg-gray-50 transition-colors -mt-3 relative z-10">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
             </svg>

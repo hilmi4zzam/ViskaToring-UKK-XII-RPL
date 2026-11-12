@@ -112,7 +112,7 @@ export default function LaporanPage() {
           {isSudahPulang ? `Sudah Absen Pulang (${formatJam(todayAttendance?.jam_pulang)})` : 'Belum Absensi Pulang'}
         </button>
         <Link 
-          href="/dashboard"
+          href="/dashboard-siswa"
           className="bg-[#F0F0F0] text-black text-[15px] font-medium py-2.5 px-6 rounded-md hover:bg-gray-200 transition-colors inline-block"
         >
           Absen Sekarang

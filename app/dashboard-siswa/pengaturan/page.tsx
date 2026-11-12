@@ -311,19 +311,6 @@ export default function PengaturanPage() {
           Keluar
         </button>
       </div>
-      
-      <style jsx>{`
-        .custom-scrollbar-dudi::-webkit-scrollbar {
-          width: 3px;
-        }
-        .custom-scrollbar-dudi::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar-dudi::-webkit-scrollbar-thumb {
-          background: #000066;
-          border-radius: 10px;
-        }
-      `}</style>
     </div>
   );
 }

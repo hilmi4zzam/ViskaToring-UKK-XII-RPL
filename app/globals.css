@@ -8,3 +8,20 @@ body {
   background-color: white;
   color: black;
 }
+
+/* Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar,
+.custom-scrollbar-dudi::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+.custom-scrollbar-dudi::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.custom-scrollbar-dudi::-webkit-scrollbar-thumb {
+  background: #000066;
+  border-radius: 10px;
+}

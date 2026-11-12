@@ -27,16 +27,21 @@ export default function KonfigurasiPage() {
 
   // Cek user login dan ambil daftar companies dari Supabase
   useEffect(() => {
-    const user = getStoredUser();
-    if (!user) {
-      router.push('/');
-      return;
-    }
+    async function init() {
+      const user = getStoredUser();
+      if (!user) {
+        router.push('/');
+        return;
+      }
 
-    setCurrentUser(user);
+      if (user.role === 'guru') {
+        router.replace('/konfigurasi-guru');
+        return;
+      }
 
-    // Hanya ambil daftar DUDI jika pengguna adalah siswa
-    async function loadCompanies() {
+      setCurrentUser(user);
+
+      // Hanya ambil daftar DUDI jika pengguna adalah siswa
       setFetchingCompanies(true);
       try {
         const { data, error } = await supabase
@@ -65,7 +70,7 @@ export default function KonfigurasiPage() {
       }
     }
 
-    void loadCompanies();
+    void init();
   }, [router]);
 
   // Filter list perusahaan berdasarkan input pencarian
@@ -164,7 +169,7 @@ export default function KonfigurasiPage() {
       setStoredUser(updatedUserSession);
 
       // Redirect otomatis ke Dashboard utama
-      router.push('/dashboard');
+      router.push('/dashboard-siswa');
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat menyimpan data ke Supabase';
@@ -417,20 +422,6 @@ export default function KonfigurasiPage() {
           </div>
         </div>
       )}
-
-      {/* Global CSS for Custom Scrollbar */}
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #000066;
-          border-radius: 10px;
-        }
-      `}</style>
     </div>
   );
 }
