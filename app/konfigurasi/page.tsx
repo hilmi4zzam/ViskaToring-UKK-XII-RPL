@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, clearStoredUser } from '@/supabase/auth';
 import { Company, User } from '@/supabase/types';
 
 export default function KonfigurasiPage() {
@@ -22,6 +21,7 @@ export default function KonfigurasiPage() {
   const [loading, setLoading] = useState(false);
   const [fetchingCompanies, setFetchingCompanies] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showExitModal, setShowExitModal] = useState(false);
 
   const isSiswa = !currentUser?.role || currentUser.role === 'siswa';
 
@@ -174,17 +174,28 @@ export default function KonfigurasiPage() {
     }
   };
 
+  const handleConfirmExit = () => {
+    // Kosongkan sesi agar saat kembali ke '/' tidak diredirect ulang ke '/konfigurasi'
+    clearStoredUser();
+    router.push('/');
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center relative pt-12 md:pt-16 pb-12">
       
       {/* Back Button */}
       <div className="absolute top-8 left-8 md:top-12 md:left-12">
-        <Link href="/" className="text-black hover:text-gray-600 transition-colors" title="Kembali ke halaman login">
+        <button 
+          type="button" 
+          onClick={() => setShowExitModal(true)} 
+          className="text-black hover:text-gray-600 transition-colors cursor-pointer" 
+          title="Kembali ke halaman login"
+        >
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-        </Link>
+        </button>
       </div>
 
       <div className="w-full max-w-[440px] px-6">
@@ -369,6 +380,43 @@ export default function KonfigurasiPage() {
           </button>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Tinggalkan Halaman */}
+      {showExitModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-100 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-3.5">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h3 className="text-[17px] font-semibold text-gray-900 mb-1.5">
+              Yakin untuk meninggalkan page ini?
+            </h3>
+            <p className="text-[13px] text-gray-500 mb-6 leading-relaxed">
+              Pilihan DUDI dan perubahan kata sandi tidak akan disimpan. Anda akan kembali ke halaman login.
+            </p>
+            <div className="flex items-center gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setShowExitModal(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-gray-300 text-gray-700 text-[14px] font-medium hover:bg-gray-100 transition-colors"
+              >
+                Tidak
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmExit}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#000066] text-white text-[14px] font-medium hover:bg-[#000044] transition-colors"
+              >
+                Ya
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global CSS for Custom Scrollbar */}
       <style jsx global>{`

@@ -174,69 +174,65 @@ export default function LaporanPage() {
       </div>
 
       {/* Table Section */}
-      <div className="w-full bg-white mt-4 overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-400 text-center">
-          <thead>
-            <tr className="border-b border-gray-400 bg-gray-50">
-              <th className="py-4 px-4 border-r border-gray-400 font-medium text-[15px] text-black w-[15%]">Tanggal</th>
-              <th className="py-4 px-4 border-r border-gray-400 font-medium text-[15px] text-black w-[15%]">Status</th>
-              <th className="py-4 px-4 border-r border-gray-400 font-medium text-[15px] text-black w-[25%]">Waktu Masuk</th>
-              <th className="py-4 px-4 border-r border-gray-400 font-medium text-[15px] text-black w-[25%]">Waktu Pulang</th>
-              <th className="py-4 px-4 font-medium text-[15px] text-black w-[20%]">Laporan</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-500 text-[15px]">
-                  Memuat data riwayat absensi dari Supabase...
-                </td>
+      <div className="w-full bg-white mt-4 border border-gray-400 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-center">
+            <thead>
+              <tr className="bg-[#EBEBEB] border-b border-gray-400">
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Tanggal</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[15%]">Status</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Waktu Masuk</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Waktu Pulang</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[25%]">Laporan</th>
               </tr>
-            ) : filteredAttendances.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-500 text-[15px]">
-                  Tidak ada data absensi pada {selectedMonth} {selectedYear}.
-                </td>
-              </tr>
-            ) : (
-              filteredAttendances.map((att) => (
-                <tr key={att.id} className="border-b border-gray-400 last:border-b-0 hover:bg-gray-50/50">
-                  <td className="py-4 px-4 border-r border-gray-400 text-[15px] text-black font-medium">
-                    {formatTanggal(att.tanggal_absen)}
-                  </td>
-                  <td className="py-4 px-4 border-r border-gray-400 text-[15px]">
-                    <span className={`px-2.5 py-1 rounded-md text-[13px] font-semibold ${
-                      att.status_kehadiran === 'WFO' 
-                        ? 'bg-blue-100 text-[#000066]' 
-                        : att.status_kehadiran === 'WFH'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {att.status_kehadiran}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 border-r border-gray-400 text-[15px] text-black">
-                    {formatJam(att.jam_masuk)}
-                  </td>
-                  <td className="py-4 px-4 border-r border-gray-400 text-[15px] text-black">
-                    {formatJam(att.jam_pulang)}
-                  </td>
-                  <td className="py-4 px-4 text-[15px] flex justify-center">
-                    <button 
-                      onClick={() => {
-                        setSelectedAttendance(att);
-                        setModalOpen(true);
-                      }}
-                      className="bg-[#000066] text-white px-6 py-1.5 rounded-md font-medium text-[14px] hover:bg-[#000044] transition-colors"
-                    >
-                      {att.reports && att.reports.length > 0 ? 'Lihat Laporan' : 'Belum Ada Laporan'}
-                    </button>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px]">
+                    Memuat data riwayat absensi dari Supabase...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : filteredAttendances.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px]">
+                    Tidak ada data absensi pada {selectedMonth} {selectedYear}.
+                  </td>
+                </tr>
+              ) : (
+                filteredAttendances.map((att) => (
+                  <tr key={att.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                      {formatTanggal(att.tanggal_absen)}
+                    </td>
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                      {att.status_kehadiran || '-'}
+                    </td>
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                      {formatJam(att.jam_masuk)}
+                    </td>
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                      {formatJam(att.jam_pulang)}
+                    </td>
+                    <td className="py-2.5 px-4">
+                      <div className="flex justify-center items-center">
+                        <button 
+                          onClick={() => {
+                            setSelectedAttendance(att);
+                            setModalOpen(true);
+                          }}
+                          className="bg-[#000066] text-white px-5 py-2 rounded-lg font-normal text-[14px] hover:bg-[#000044] transition-colors"
+                        >
+                          Lihat Laporan
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal Detail Laporan */}
