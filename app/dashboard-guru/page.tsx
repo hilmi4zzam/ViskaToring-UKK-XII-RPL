@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/supabase/client';
 import { getStoredUser } from '@/supabase/auth';
-import { Attendance, Company, User } from '@/supabase/types';
+import { Attendance, Company } from '@/supabase/types';
 import { getLocalDateString } from '@/supabase/helpers';
 
 interface StudentWithAttendance {
@@ -18,28 +18,24 @@ export default function DashboardGuruPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [students, setStudents] = useState<StudentWithAttendance[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'WFO' | 'WFH' | 'ALPA' | 'BELUM'>('ALL');
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const loadData = useCallback(async (guruUser: User) => {
+  // Modal Filter State
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [modalSearch, setModalSearch] = useState('');
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[] | null>(null);
+  const [tempSelectedStudentIds, setTempSelectedStudentIds] = useState<string[]>([]);
+
+  const loadData = useCallback(async () => {
     setLoading(true);
     const today = getLocalDateString();
 
     try {
-      // 1. Ambil seluruh siswa magang yang berstatus approved
-      let studentQuery = supabase
+      // 1. Ambil seluruh user account dengan role siswa
+      const { data: studentList, error: sErr } = await supabase
         .from('user_accounts')
         .select('id, username, company_id, companies(*)')
         .eq('role', 'siswa')
-        .eq('status', 'approved')
         .order('username', { ascending: true });
-
-      // Jika guru terikat ke company_id tertentu, filter berdasarkan company
-      if (guruUser.company_id) {
-        studentQuery = studentQuery.eq('company_id', guruUser.company_id);
-      }
-
-      const { data: studentList, error: sErr } = await studentQuery;
 
       if (sErr) {
         console.error('Error fetching students:', sErr);
@@ -91,7 +87,7 @@ export default function DashboardGuruPage() {
     const init = async () => {
       const user = getStoredUser();
       if (user) {
-        await loadData(user);
+        await loadData();
       }
     };
 
@@ -105,18 +101,48 @@ export default function DashboardGuruPage() {
     return `${date.getHours().toString().padStart(2, '0')}.${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
-  // Filter pencarian berdasarkan nama siswa, DUDI, dan status kehadiran
+  // Buka modal filter & sinkronisasi siswa yang terpilih
+  const handleOpenFilterModal = () => {
+    setModalSearch('');
+    setTempSelectedStudentIds(selectedStudentIds !== null ? selectedStudentIds : students.map((s) => s.id));
+    setShowFilterModal(true);
+  };
+
+  // Toggle pilihan siswa di dalam pop up
+  const toggleStudentSelection = (id: string) => {
+    setTempSelectedStudentIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // Simpan filter dari pop up
+  const handleSaveFilter = () => {
+    setSelectedStudentIds(tempSelectedStudentIds);
+    setShowFilterModal(false);
+  };
+
+  // Siswa yang ditampilkan di dalam modal pop up (berdasarkan modalSearch)
+  const modalFilteredStudents = students.filter((item) => {
+    const q = modalSearch.toLowerCase().trim();
+    if (!q) return true;
+    const matchName = item.username.toLowerCase().includes(q);
+    const matchDudi = item.companies?.company_name?.toLowerCase().includes(q) ?? false;
+    return matchName || matchDudi;
+  });
+
+  // Siswa yang ditampilkan di tabel utama (berdasarkan main search bar & filter pilihan siswa)
   const filteredStudents = students.filter((item) => {
+    // Filter pilihan dari modal
+    if (selectedStudentIds !== null && !selectedStudentIds.includes(item.id)) {
+      return false;
+    }
+
+    // Filter dari search bar utama
     const q = searchQuery.toLowerCase().trim();
-    const matchName = !q || item.username.toLowerCase().includes(q);
-    const matchDudi = !q || (item.companies?.company_name.toLowerCase().includes(q) ?? false);
-    const textMatch = matchName || matchDudi;
-
-    if (!textMatch) return false;
-
-    if (statusFilter === 'ALL') return true;
-    if (statusFilter === 'BELUM') return !item.attendance?.status_kehadiran;
-    return item.attendance?.status_kehadiran === statusFilter;
+    if (!q) return true;
+    const matchName = item.username.toLowerCase().includes(q);
+    const matchDudi = item.companies?.company_name?.toLowerCase().includes(q) ?? false;
+    return matchName || matchDudi;
   });
 
   return (
@@ -140,10 +166,10 @@ export default function DashboardGuruPage() {
         </div>
 
         {/* Filter Button */}
-        <div className="relative">
+        <div>
           <button
             type="button"
-            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+            onClick={handleOpenFilterModal}
             className="bg-[#000066] text-white rounded-xl px-7 py-3 text-[15px] font-medium hover:bg-[#000044] transition-colors flex items-center gap-2.5 shrink-0 shadow-sm"
           >
             <span>Filter</span>
@@ -153,50 +179,89 @@ export default function DashboardGuruPage() {
               <line x1="10" y1="18" x2="14" y2="18"></line>
             </svg>
           </button>
-
-          {/* Filter Dropdown */}
-          {showFilterDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-30 flex flex-col gap-1">
-              <button
-                type="button"
-                onClick={() => { setStatusFilter('ALL'); setShowFilterDropdown(false); }}
-                className={`w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors ${
-                  statusFilter === 'ALL' ? 'bg-[#000066]/10 text-[#000066] font-semibold' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Semua Status
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStatusFilter('WFO'); setShowFilterDropdown(false); }}
-                className={`w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors ${
-                  statusFilter === 'WFO' ? 'bg-[#000066]/10 text-[#000066] font-semibold' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                WFO (Hadir di DUDI)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStatusFilter('WFH'); setShowFilterDropdown(false); }}
-                className={`w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors ${
-                  statusFilter === 'WFH' ? 'bg-[#000066]/10 text-[#000066] font-semibold' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                WFH (Dari Rumah)
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStatusFilter('BELUM'); setShowFilterDropdown(false); }}
-                className={`w-full text-left px-3 py-2 text-[13px] rounded-lg transition-colors ${
-                  statusFilter === 'BELUM' ? 'bg-[#000066]/10 text-[#000066] font-semibold' : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Belum Absen
-              </button>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Modal Pop Up Filter Siswa */}
+      {showFilterModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-[1px]">
+          <div className="bg-[#EDEDED] rounded-[28px] p-6 max-w-[420px] w-full shadow-2xl relative border border-gray-300">
+            {/* Header: Tombol Kembali */}
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setShowFilterModal(false)}
+                className="text-black hover:opacity-70 transition-opacity p-1 -ml-1 flex items-center justify-center"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            {/* Input Search di dalam Pop Up */}
+            <div className="relative mb-5">
+              <input
+                type="text"
+                value={modalSearch}
+                onChange={(e) => setModalSearch(e.target.value)}
+                placeholder=""
+                className="w-full bg-[#EDEDED] border border-gray-400 rounded-xl py-2.5 pl-4 pr-11 text-[15px] text-black outline-none focus:border-[#000066] transition-colors"
+                autoFocus
+              />
+              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-black">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+            </div>
+
+            {/* Daftar Siswa */}
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#000066]/40 [&::-webkit-scrollbar-thumb]:rounded-full">
+              {modalFilteredStudents.length === 0 ? (
+                <div className="text-center py-10 text-gray-500 text-[14px]">
+                  Tidak ada siswa ditemukan.
+                </div>
+              ) : (
+                modalFilteredStudents.map((item) => {
+                  const isSelected = tempSelectedStudentIds.includes(item.id);
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => toggleStudentSelection(item.id)}
+                      className="w-full bg-[#EDEDED] border border-gray-400 rounded-xl py-3 px-4 flex items-center justify-between cursor-pointer hover:border-gray-600 transition-colors select-none shadow-xs"
+                    >
+                      <span className="text-[14px] text-black font-normal truncate mr-3">
+                        {item.username} - {item.companies?.company_name || 'Belum ada DUDI'}
+                      </span>
+                      <div
+                        className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected
+                            ? 'bg-[#000066]'
+                            : 'border-[2.5px] border-[#000066] bg-transparent'
+                        }`}
+                      />
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Tombol Simpan */}
+            <div className="mt-7 flex justify-end">
+              <button
+                type="button"
+                onClick={handleSaveFilter}
+                className="bg-[#000066] text-white px-8 py-2.5 rounded-xl text-[14px] font-medium hover:bg-[#000044] transition-colors shadow-sm"
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Monitoring Table */}
       <div className="w-full bg-white border border-gray-400 rounded-2xl overflow-hidden shadow-sm">
