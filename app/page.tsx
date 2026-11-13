@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/supabase/client';
@@ -23,7 +23,28 @@ export default function HomePage() {
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
 
+  // Easter egg: 7x klik logo untuk masuk ke login Admin
+  const [logoClickCount, setLogoClickCount] = useState(0);
+  const logoTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const router = useRouter();
+
+  const handleLogoClick = () => {
+    if (logoTimerRef.current) {
+      clearTimeout(logoTimerRef.current);
+    }
+
+    const nextCount = logoClickCount + 1;
+    if (nextCount >= 7) {
+      setLogoClickCount(0);
+      router.push('/admin/login-admin');
+    } else {
+      setLogoClickCount(nextCount);
+      logoTimerRef.current = setTimeout(() => {
+        setLogoClickCount(0);
+      }, 3000);
+    }
+  };
 
   // Otomatis arahkan jika pengguna sudah login sebelumnya
   useEffect(() => {
@@ -75,6 +96,12 @@ export default function HomePage() {
       }
 
       if (user) {
+        // Role Guard: Tolak akun Admin dari portal login utama siswa & guru
+        if (user.role === 'admin') {
+          setError('Akun Administrator tidak dapat masuk melalui portal ini. Silakan masuk melalui halaman login Admin.');
+          return;
+        }
+
         // Cek status persetujuan dari Admin
         if (user.status === 'pending') {
           setError('Akun Anda masih dalam proses peninjauan oleh Admin. Anda baru dapat masuk setelah pengajuan disetujui.');
@@ -213,8 +240,15 @@ export default function HomePage() {
           
           {/* Header Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <Image src="/smk.svg" alt="SMK Logo" width={36} height={36} priority className="w-[36px] h-auto" />
-            <h2 className="text-[28px] font-semibold text-black">ViskaToring</h2>
+            <button
+              type="button"
+              onClick={handleLogoClick}
+              className="outline-none focus:outline-none cursor-default select-none active:scale-95 transition-transform p-0.5 rounded-lg"
+              title="ViskaToring"
+            >
+              <Image src="/smk.svg" alt="SMK Logo" width={36} height={36} priority className="w-[36px] h-auto pointer-events-none" />
+            </button>
+            <h2 className="text-[28px] font-semibold text-black select-none">ViskaToring</h2>
           </div>
 
           <hr className="border-gray-300 mb-8" />
