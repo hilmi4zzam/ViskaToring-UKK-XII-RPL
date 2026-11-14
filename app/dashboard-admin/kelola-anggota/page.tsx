@@ -37,6 +37,8 @@ export default function KelolaAnggotaPage() {
   const [editUsername, setEditUsername] = useState('');
   const [editRole, setEditRole] = useState<'siswa' | 'guru'>('siswa');
   const [editCompanyId, setEditCompanyId] = useState<number | null>(null);
+  const [editDudiQuery, setEditDudiQuery] = useState('');
+  const [showEditDudiDropdown, setShowEditDudiDropdown] = useState(false);
 
   // Close filter dropdown on outside click
   useEffect(() => {
@@ -122,6 +124,11 @@ export default function KelolaAnggotaPage() {
     return true; // 'Semua'
   });
 
+  // Filtered companies for edit modal
+  const filteredCompanies = companies.filter((c) =>
+    c.company_name.toLowerCase().includes(editDudiQuery.toLowerCase())
+  );
+
   // Modal Handlers
   const handleOpenDeleteSingle = (member: MemberItem) => {
     setSelectedMember(member);
@@ -133,7 +140,15 @@ export default function KelolaAnggotaPage() {
     setEditUsername(member.username);
     setEditRole(member.role === 'guru' ? 'guru' : 'siswa');
     setEditCompanyId(member.company_id ?? null);
+    setEditDudiQuery(member.companies?.company_name || '');
+    setShowEditDudiDropdown(false);
     setModalType('edit_member');
+  };
+
+  const handleSelectEditDudi = (company: Company) => {
+    setEditCompanyId(company.id);
+    setEditDudiQuery(company.company_name);
+    setShowEditDudiDropdown(false);
   };
 
   const handleOpenDeleteAll = () => {
@@ -621,23 +636,52 @@ export default function KelolaAnggotaPage() {
             </div>
 
             {/* Field 3: Dudi (Hanya untuk siswa) */}
-            <div className="mb-8">
+            <div className="mb-8 relative">
               <label className="block text-[14px] font-medium text-black mb-1.5">
                 Dudi :
               </label>
               {editRole === 'siswa' ? (
-                <select
-                  value={editCompanyId ?? ''}
-                  onChange={(e) => setEditCompanyId(e.target.value ? Number(e.target.value) : null)}
-                  className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black outline-none border border-transparent focus:border-[#000066] shadow-xs cursor-pointer"
-                >
-                  <option value="">-- Belum ada DUDI --</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.company_name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={editDudiQuery}
+                    placeholder="Cari nama perusahaan/DUDI..."
+                    onChange={(e) => {
+                      setEditDudiQuery(e.target.value);
+                      setEditCompanyId(null);
+                      setShowEditDudiDropdown(true);
+                    }}
+                    onFocus={() => setShowEditDudiDropdown(true)}
+                    className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black outline-none border border-transparent focus:border-[#000066] shadow-xs relative z-10"
+                  />
+
+                  {/* Dropdown Suggestions */}
+                  {showEditDudiDropdown && (
+                    <div className="absolute top-full left-0 w-full mt-2 z-20 shadow-lg">
+                      <div className="flex flex-col gap-[6px] max-h-[160px] overflow-y-auto pr-2 bg-white rounded-xl p-2 border border-gray-200">
+                        {filteredCompanies.length > 0 ? (
+                          filteredCompanies.map((comp) => (
+                            <div
+                              key={comp.id}
+                              onClick={() => handleSelectEditDudi(comp)}
+                              className={`w-full rounded-lg px-4 py-[10px] text-[13px] cursor-pointer transition-colors border-r-4 ${
+                                editCompanyId === comp.id
+                                  ? 'bg-[#000066]/10 text-[#000066] font-semibold border-[#000066]'
+                                  : 'bg-[#EDEDED] text-gray-700 hover:bg-[#e4e4e4] border-transparent'
+                              }`}
+                            >
+                              {comp.company_name}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="w-full bg-[#EDEDED] rounded-lg px-4 py-[10px] text-[13px] text-gray-500 text-center">
+                            Tidak ada DUDI yang cocok di database
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="w-full bg-white/70 rounded-xl py-3 px-4 text-[14px] text-gray-400 select-none cursor-not-allowed">
                   - (Guru tidak memerlukan DUDI)
