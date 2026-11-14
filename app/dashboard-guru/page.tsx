@@ -54,7 +54,7 @@ export default function DashboardGuruPage() {
       // 2. Ambil user account dengan role siswa yang statusnya sudah 'approved' (pending dan rejected tidak dimasukkan)
       const { data: studentList, error: sErr } = await supabase
         .from('user_accounts')
-        .select('id, username, company_id, status, companies(*)')
+        .select('id, username, company_id, status, companies:company_id(*)')
         .eq('role', 'siswa')
         .eq('status', 'approved')
         .order('username', { ascending: true });
