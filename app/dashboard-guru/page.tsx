@@ -10,6 +10,7 @@ interface StudentWithAttendance {
   id: string;
   username: string;
   company_id: number | null;
+  status?: string;
   companies: Company | null;
   attendance?: Attendance | null;
 }
@@ -50,11 +51,12 @@ export default function DashboardGuruPage() {
         console.warn('Kolom selected mungkin belum dibuat di database:', err);
       }
 
-      // 2. Ambil seluruh user account dengan role siswa
+      // 2. Ambil user account dengan role siswa yang statusnya sudah 'approved' (pending dan rejected tidak dimasukkan)
       const { data: studentList, error: sErr } = await supabase
         .from('user_accounts')
-        .select('id, username, company_id, companies(*)')
+        .select('id, username, company_id, status, companies(*)')
         .eq('role', 'siswa')
+        .eq('status', 'approved')
         .order('username', { ascending: true });
 
       if (sErr) {
@@ -91,6 +93,7 @@ export default function DashboardGuruPage() {
         id: item.id,
         username: item.username,
         company_id: item.company_id,
+        status: item.status,
         companies: (Array.isArray(item.companies) ? item.companies[0] : item.companies) as Company | null,
         attendance: attMap.get(item.id) || null,
       }));

@@ -22,6 +22,9 @@ export interface User {
   first_login: boolean;
   selected?: string[] | null;
   companies?: Company | null;
+  pending_company_id?: number | null;
+  pending_company_status?: UserAccountStatus | null;
+  pending_companies?: Company | null;
 }
 
 export interface Attendance {

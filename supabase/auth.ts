@@ -50,7 +50,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
   try {
     const { data, error } = await supabase
       .from('user_accounts')
-      .select('id, username, company_id, role, status, first_login, companies(*)')
+      .select('id, username, company_id, role, status, first_login, pending_company_id, pending_company_status, companies(*)')
       .eq('id', current.id)
       .maybeSingle();
 
@@ -65,6 +65,8 @@ export async function fetchCurrentUser(): Promise<User | null> {
       role: (['admin', 'guru', 'siswa'].includes(data.role) ? data.role : 'siswa') as UserRole,
       status: (['pending', 'approved', 'rejected'].includes(data.status) ? data.status : 'approved') as UserAccountStatus,
       first_login: data.first_login ?? false,
+      pending_company_id: data.pending_company_id ?? null,
+      pending_company_status: data.pending_company_status ?? null,
       companies: (Array.isArray(data.companies) ? data.companies[0] : data.companies) as Company | null,
     };
     setStoredUser(updatedUser);
