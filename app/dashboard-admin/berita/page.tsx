@@ -2,42 +2,48 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/supabase/client';
-import { BeritaItem } from '@/supabase/types';
+import { NewsItem } from '@/supabase/types';
 
-const STORAGE_KEY = 'viskatoring_berita_data';
+const STORAGE_KEY = 'viskatoring_news_data';
 
-const DEFAULT_BERITA: BeritaItem[] = [
+const DEFAULT_NEWS: NewsItem[] = [
   {
-    id: '1',
-    judul: 'Anak PKL wajib menaati aturan DUDI.',
-    deskripsi: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-    target: 'siswa',
+    id: 1,
+    title: 'Anak PKL wajib menaati aturan DUDI.',
+    content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
+    source_type: 'sekolah',
+    company_id: null,
+    target_role: 'siswa',
     created_at: '2026-09-14T08:00:00.000Z',
   },
   {
-    id: '2',
-    judul: 'Anak PKL wajib menaati aturan DUDI.',
-    deskripsi: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-    target: 'guru',
+    id: 2,
+    title: 'Anak PKL wajib menaati aturan DUDI.',
+    content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
+    source_type: 'sekolah',
+    company_id: null,
+    target_role: 'guru',
     created_at: '2026-09-14T08:00:00.000Z',
   },
   {
-    id: '3',
-    judul: 'Anak PKL wajib menaati aturan DUDI.',
-    deskripsi: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-    target: 'guru',
+    id: 3,
+    title: 'Anak PKL wajib menaati aturan DUDI.',
+    content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
+    source_type: 'sekolah',
+    company_id: null,
+    target_role: 'guru',
     created_at: '2026-09-14T08:00:00.000Z',
   },
 ];
 
 export default function KelolaBeritaPage() {
-  const [beritaList, setBeritaList] = useState<BeritaItem[]>([]);
+  const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal States
   const [modalType, setModalType] = useState<'create' | 'delete' | null>(null);
   const [targetType, setTargetType] = useState<'siswa' | 'guru'>('siswa');
-  const [selectedBerita, setSelectedBerita] = useState<BeritaItem | null>(null);
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
 
   // Form input state
   const [judulInput, setJudulInput] = useState('');
@@ -56,23 +62,24 @@ export default function KelolaBeritaPage() {
 
   const loadData = useCallback(async () => {
     try {
-      // 1. Coba ambil dari Supabase
+      // 1. Coba ambil dari Supabase tabel 'news' (khusus source_type = 'sekolah')
       const { data, error } = await supabase
-        .from('berita')
+        .from('news')
         .select('*')
+        .eq('source_type', 'sekolah')
         .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        setBeritaList(data as BeritaItem[]);
+        setNewsList(data as NewsItem[]);
         return;
       }
 
-      // 2. Fallback ke LocalStorage jika tabel belum dibuat atau kosong
+      // 2. Fallback ke LocalStorage jika tabel belum dibuat atau offline
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
-          const parsed = JSON.parse(saved) as BeritaItem[];
-          setBeritaList(parsed);
+          const parsed = JSON.parse(saved) as NewsItem[];
+          setNewsList(parsed);
           return;
         } catch {
           // ignore error
@@ -80,18 +87,18 @@ export default function KelolaBeritaPage() {
       }
 
       // 3. Inisialisasi data default
-      setBeritaList(DEFAULT_BERITA);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_BERITA));
+      setNewsList(DEFAULT_NEWS);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_NEWS));
     } catch {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
-          setBeritaList(JSON.parse(saved) as BeritaItem[]);
+          setNewsList(JSON.parse(saved) as NewsItem[]);
         } catch {
-          setBeritaList(DEFAULT_BERITA);
+          setNewsList(DEFAULT_NEWS);
         }
       } else {
-        setBeritaList(DEFAULT_BERITA);
+        setNewsList(DEFAULT_NEWS);
       }
     } finally {
       setLoading(false);
@@ -114,14 +121,14 @@ export default function KelolaBeritaPage() {
   };
 
   // Handler Buka Modal Hapus Berita
-  const handleOpenDeleteModal = (item: BeritaItem) => {
-    setSelectedBerita(item);
+  const handleOpenDeleteModal = (item: NewsItem) => {
+    setSelectedNews(item);
     setModalType('delete');
   };
 
   const handleCloseModal = () => {
     setModalType(null);
-    setSelectedBerita(null);
+    setSelectedNews(null);
   };
 
   // Simpan Berita Baru
@@ -132,33 +139,40 @@ export default function KelolaBeritaPage() {
     }
 
     setActionLoading(true);
-    const newBerita: BeritaItem = {
-      id: Date.now().toString(),
-      judul: judulInput.trim(),
-      deskripsi: deskripsiInput.trim(),
-      target: targetType,
+    const newItem: NewsItem = {
+      id: Date.now(),
+      title: judulInput.trim(),
+      content: deskripsiInput.trim(),
+      source_type: 'sekolah',
+      company_id: null,
+      target_role: targetType,
       created_at: new Date().toISOString(),
     };
 
     try {
-      // Coba simpan ke Supabase jika ada tabel berita
-      const { error } = await supabase.from('berita').insert({
-        judul: newBerita.judul,
-        deskripsi: newBerita.deskripsi,
-        target: newBerita.target,
-        created_at: newBerita.created_at,
-      });
+      // Coba simpan ke Supabase tabel news
+      const { data, error } = await supabase
+        .from('news')
+        .insert({
+          title: newItem.title,
+          content: newItem.content,
+          source_type: 'sekolah',
+          company_id: null,
+          target_role: newItem.target_role,
+          created_at: newItem.created_at,
+        })
+        .select();
 
-      if (error) {
-        console.warn('Simpan ke Supabase dilewati, menggunakan penyimpanan lokal:', error.message);
+      if (!error && data && data[0]) {
+        newItem.id = data[0].id;
       }
     } catch (err) {
-      console.warn('Gagal insert ke Supabase, fallback ke lokal:', err);
+      console.warn('Gagal insert ke Supabase news, fallback ke lokal:', err);
     }
 
     // Selalu perbarui state lokal & localStorage
-    const updated = [newBerita, ...beritaList];
-    setBeritaList(updated);
+    const updated = [newItem, ...newsList];
+    setNewsList(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
     setActionLoading(false);
@@ -167,18 +181,18 @@ export default function KelolaBeritaPage() {
 
   // Hapus Berita
   const handleConfirmDelete = async () => {
-    if (!selectedBerita) return;
+    if (!selectedNews) return;
     setActionLoading(true);
 
     try {
-      // Coba hapus di Supabase jika ada
-      await supabase.from('berita').delete().eq('id', selectedBerita.id);
+      // Coba hapus di Supabase
+      await supabase.from('news').delete().eq('id', selectedNews.id);
     } catch (err) {
-      console.warn('Gagal hapus di Supabase, fallback ke lokal:', err);
+      console.warn('Gagal hapus di Supabase news, fallback ke lokal:', err);
     }
 
-    const updated = beritaList.filter((b) => b.id !== selectedBerita.id);
-    setBeritaList(updated);
+    const updated = newsList.filter((b) => b.id !== selectedNews.id);
+    setNewsList(updated);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
     setActionLoading(false);
@@ -186,8 +200,8 @@ export default function KelolaBeritaPage() {
   };
 
   // Filter per target
-  const beritaSiswa = beritaList.filter((b) => b.target === 'siswa' || b.target === 'semua');
-  const beritaGuru = beritaList.filter((b) => b.target === 'guru' || b.target === 'semua');
+  const newsSiswa = newsList.filter((b) => b.target_role === 'siswa' || b.target_role === 'semua');
+  const newsGuru = newsList.filter((b) => b.target_role === 'guru' || b.target_role === 'semua');
 
   return (
     <div className="w-full flex flex-col gap-8 pb-10">
@@ -219,12 +233,12 @@ export default function KelolaBeritaPage() {
             <div className="py-10 text-center text-gray-400 text-[14px]">
               Memuat data berita...
             </div>
-          ) : beritaSiswa.length === 0 ? (
+          ) : newsSiswa.length === 0 ? (
             <div className="py-10 text-center text-gray-400 text-[14px]">
               Belum ada berita untuk siswa.
             </div>
           ) : (
-            beritaSiswa.map((item) => (
+            newsSiswa.map((item) => (
               <div
                 key={item.id}
                 className="w-full bg-[#EDEDED] rounded-[20px] py-4 px-5 sm:px-6 flex items-start justify-between gap-4 shadow-xs"
@@ -232,10 +246,10 @@ export default function KelolaBeritaPage() {
                 {/* Bagian Kiri: Judul & Deskripsi */}
                 <div className="flex-1 min-w-0 pr-2">
                   <h4 className="text-[15px] font-semibold text-black leading-snug mb-1">
-                    {item.judul}
+                    {item.title}
                   </h4>
                   <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-2">
-                    {item.deskripsi}
+                    {item.content}
                   </p>
                 </div>
 
@@ -292,12 +306,12 @@ export default function KelolaBeritaPage() {
             <div className="py-10 text-center text-gray-400 text-[14px]">
               Memuat data berita...
             </div>
-          ) : beritaGuru.length === 0 ? (
+          ) : newsGuru.length === 0 ? (
             <div className="py-10 text-center text-gray-400 text-[14px]">
               Belum ada berita untuk guru.
             </div>
           ) : (
-            beritaGuru.map((item) => (
+            newsGuru.map((item) => (
               <div
                 key={item.id}
                 className="w-full bg-[#EDEDED] rounded-[20px] py-4 px-5 sm:px-6 flex items-start justify-between gap-4 shadow-xs"
@@ -305,10 +319,10 @@ export default function KelolaBeritaPage() {
                 {/* Bagian Kiri: Judul & Deskripsi */}
                 <div className="flex-1 min-w-0 pr-2">
                   <h4 className="text-[15px] font-semibold text-black leading-snug mb-1">
-                    {item.judul}
+                    {item.title}
                   </h4>
                   <p className="text-[13px] text-gray-600 leading-relaxed line-clamp-2">
-                    {item.deskripsi}
+                    {item.content}
                   </p>
                 </div>
 
@@ -349,54 +363,68 @@ export default function KelolaBeritaPage() {
               onClick={handleCloseModal}
               className="absolute top-7 left-7 text-black hover:opacity-70 transition-opacity p-1 flex items-center justify-center cursor-pointer"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
             </button>
 
-            {/* Header: Judul */}
-            <div className="text-center pt-0.5 mb-6">
-              <h2 className="text-[22px] font-semibold text-black">
-                Tambah Berita {targetType === 'siswa' ? 'Siswa' : 'Guru'}
-              </h2>
+            {/* Judul Modal */}
+            <h3 className="text-[20px] font-bold text-center text-black mb-6">
+              Tambah Berita
+            </h3>
+
+            {/* Target Info Badge */}
+            <div className="mb-4 flex items-center justify-center">
+              <span className="text-[12px] font-medium bg-white px-3 py-1 rounded-full text-black border border-gray-300 shadow-xs">
+                Penerima: <strong className="capitalize">{targetType}</strong>
+              </span>
             </div>
 
             {/* Form Fields */}
-            <div className="mb-4">
-              <label className="block text-[14px] font-medium text-black mb-1.5">
-                Judul Berita :
-              </label>
-              <input
-                type="text"
-                value={judulInput}
-                onChange={(e) => setJudulInput(e.target.value)}
-                placeholder="Masukkan judul pengumuman/berita..."
-                className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black outline-none border border-transparent focus:border-[#000066] shadow-xs"
-                autoFocus
-              />
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="block text-[14px] font-semibold text-black mb-1.5">
+                  Judul Berita :
+                </label>
+                <input
+                  type="text"
+                  value={judulInput}
+                  onChange={(e) => setJudulInput(e.target.value)}
+                  placeholder="Masukkan judul pengumuman..."
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-[14px] text-black placeholder:text-gray-400 focus:outline-none focus:border-[#000066]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[14px] font-semibold text-black mb-1.5">
+                  Isi Berita :
+                </label>
+                <textarea
+                  value={deskripsiInput}
+                  onChange={(e) => setDeskripsiInput(e.target.value)}
+                  placeholder="Tuliskan detail pengumuman yang ingin disampaikan..."
+                  rows={4}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-[14px] text-black placeholder:text-gray-400 focus:outline-none focus:border-[#000066] resize-none"
+                />
+              </div>
             </div>
 
-            <div className="mb-8">
-              <label className="block text-[14px] font-medium text-black mb-1.5">
-                Isi Berita :
-              </label>
-              <textarea
-                value={deskripsiInput}
-                onChange={(e) => setDeskripsiInput(e.target.value)}
-                placeholder="Tuliskan detail berita lengkap di sini..."
-                rows={4}
-                className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black outline-none border border-transparent focus:border-[#000066] shadow-xs leading-relaxed resize-none"
-              />
-            </div>
-
-            {/* Tombol Publikasikan */}
-            <div className="flex justify-end">
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                disabled={actionLoading}
+                className="px-5 py-2.5 rounded-xl text-[14px] font-medium text-gray-700 bg-white hover:bg-gray-100 transition-colors cursor-pointer border border-gray-300"
+              >
+                Batal
+              </button>
               <button
                 type="button"
                 onClick={handleSaveBerita}
                 disabled={actionLoading}
-                className="bg-[#000066] hover:bg-[#000044] text-white px-8 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                className="px-6 py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#000066] hover:bg-[#000050] transition-colors cursor-pointer shadow-md disabled:opacity-50"
               >
                 {actionLoading ? 'Menyimpan...' : 'Publikasikan'}
               </button>
@@ -408,38 +436,38 @@ export default function KelolaBeritaPage() {
       {/* ======================================================== */}
       {/* 4. POP UP MODAL: Hapus Berita                            */}
       {/* ======================================================== */}
-      {modalType === 'delete' && selectedBerita && (
+      {modalType === 'delete' && selectedNews && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4">
-          <div className="bg-[#EDEDED] w-full max-w-[460px] rounded-[28px] p-7 relative shadow-2xl flex flex-col border border-gray-300">
+          <div className="bg-[#EDEDED] w-full max-w-[480px] rounded-[28px] p-7 relative shadow-2xl flex flex-col border border-gray-300">
             {/* Tombol Kembali (Panah Kiri) */}
             <button 
               type="button"
               onClick={handleCloseModal}
               className="absolute top-7 left-7 text-black hover:opacity-70 transition-opacity p-1 flex items-center justify-center cursor-pointer"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
             </button>
 
-            {/* Header: Judul */}
-            <div className="text-center pt-0.5 mb-6">
-              <h2 className="text-[22px] font-semibold text-black">Hapus Berita</h2>
-            </div>
+            {/* Judul Modal */}
+            <h3 className="text-[20px] font-bold text-center text-black mb-6">
+              Hapus Berita
+            </h3>
 
-            {/* Konten */}
-            <p className="text-[14px] text-black leading-relaxed mb-8 text-center sm:text-left">
-              Yakin untuk menghapus berita <strong>&ldquo;{selectedBerita.judul}&rdquo;</strong>?
+            {/* Konfirmasi Teks */}
+            <p className="text-[14px] text-gray-700 text-center leading-relaxed px-4 mb-6">
+              Yakin untuk menghapus pengumuman <strong className="text-black">&quot;{selectedNews.title}&quot;</strong>?
             </p>
 
             {/* Tombol Aksi */}
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-center gap-4">
               <button
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={actionLoading}
-                className="bg-[#CC2929] hover:bg-[#B32424] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                className="w-[120px] py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#CC2929] hover:bg-[#B32424] transition-colors cursor-pointer shadow-md disabled:opacity-50"
               >
                 {actionLoading ? 'Menghapus...' : 'Hapus'}
               </button>
@@ -447,7 +475,7 @@ export default function KelolaBeritaPage() {
                 type="button"
                 onClick={handleCloseModal}
                 disabled={actionLoading}
-                className="bg-[#000066] hover:bg-[#000044] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
+                className="w-[120px] py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#000066] hover:bg-[#000050] transition-colors cursor-pointer shadow-md disabled:opacity-50"
               >
                 Batal
               </button>

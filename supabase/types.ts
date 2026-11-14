@@ -45,6 +45,18 @@ export interface Report {
   bukti_laporan: string | null;
 }
 
+export interface NewsItem {
+  id: string | number;
+  title: string;
+  content: string;
+  source_type: 'sekolah' | 'dudi';
+  company_id?: number | null;
+  target_role: 'siswa' | 'guru' | 'semua';
+  author_id?: string | null;
+  created_at: string;
+  companies?: Company | null;
+}
+
 export interface BeritaItem {
   id: string | number;
   judul: string;
