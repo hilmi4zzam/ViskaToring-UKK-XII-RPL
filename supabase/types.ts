@@ -44,3 +44,11 @@ export interface Report {
   deskripsi_laporan: string;
   bukti_laporan: string | null;
 }
+
+export interface BeritaItem {
+  id: string | number;
+  judul: string;
+  deskripsi: string;
+  target: 'siswa' | 'guru' | 'semua';
+  created_at: string;
+}
