@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
     try {
       const { data: user, error: queryError } = await supabase
         .from('user_accounts')
-        .select('id, username, password, company_id, role, status, first_login, companies(*)')
+        .select('id, username, password, company_id, role, status, first_login, companies:company_id(*)')
         .eq('username', username.trim())
         .eq('password', password)
         .maybeSingle();
@@ -80,21 +80,27 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7] flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-[#F4F5F7] flex flex-col justify-center items-center p-4 relative">
+      {/* Tombol Kembali (Panah Kiri di Pojok Kiri Atas Luar Card) */}
+      <div className="absolute top-8 left-8 md:top-10 md:left-10">
+        <Link 
+          href="/" 
+          className="text-black hover:text-gray-600 transition-colors p-1 flex items-center justify-center cursor-pointer"
+          title="Kembali ke Portal Utama"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </Link>
+      </div>
+
       <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
         
-        {/* Header Logo & Badge */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Image src="/smk.svg" alt="SMK Logo" width={40} height={40} priority className="w-[40px] h-auto" />
-            <h1 className="text-[26px] font-bold text-black tracking-tight">ViskaToring</h1>
-          </div>
-          <span className="inline-block bg-[#000066]/10 text-[#000066] text-[12px] font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
-            Portal Administrator
-          </span>
-          <p className="text-[13px] text-gray-500 mt-2">
-            Masuk untuk mengelola data akun, absensi, dan pengaturan sistem
-          </p>
+        {/* Header Logo */}
+        <div className="flex justify-center items-center gap-3 mb-6">
+          <Image src="/smk.svg" alt="SMK Logo" width={40} height={40} priority className="w-[40px] h-auto" />
+          <h1 className="text-[26px] font-bold text-black tracking-tight">ViskaToring</h1>
         </div>
 
         {/* Error Notification */}
@@ -162,21 +168,6 @@ export default function AdminLoginPage() {
             )}
           </button>
         </form>
-
-        <hr className="border-gray-200 my-6" />
-
-        <div className="text-center">
-          <Link 
-            href="/"
-            className="text-[13px] text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1.5"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Kembali ke Portal Siswa & Guru</span>
-          </Link>
-        </div>
 
       </div>
     </div>
