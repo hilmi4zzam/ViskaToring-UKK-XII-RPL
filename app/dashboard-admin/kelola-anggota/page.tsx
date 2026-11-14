@@ -684,7 +684,7 @@ export default function KelolaAnggotaPage() {
                 </div>
               ) : (
                 <div className="w-full bg-white/70 rounded-xl py-3 px-4 text-[14px] text-gray-400 select-none cursor-not-allowed">
-                  - (Guru tidak memerlukan DUDI)
+                  Guru tidak memerlukan DUDI
                 </div>
               )}
             </div>

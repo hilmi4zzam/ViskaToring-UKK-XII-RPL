@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
       if (user) {
         // Role Guard: Pastikan hanya akun dengan role 'admin' yang diizinkan masuk
         if (user.role !== 'admin') {
-          setError('Akses ditolak! Halaman ini hanya diperuntukkan bagi Administrator.');
+          setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
           return;
         }
 

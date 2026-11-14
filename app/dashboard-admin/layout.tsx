@@ -77,7 +77,7 @@ export default function DashboardAdminLayout({ children }: { children: React.Rea
                 : 'bg-white/50 text-gray-700 hover:bg-white'
             }`}
           >
-            Pengaturan Berita
+            Kelola Berita
           </Link>
         </nav>
 
