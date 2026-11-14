@@ -26,6 +26,10 @@ export default function DashboardGuruPage() {
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[] | null>(null);
   const [tempSelectedStudentIds, setTempSelectedStudentIds] = useState<string[]>([]);
 
+  // Modal Detail Laporan Siswa
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedStudentForReport, setSelectedStudentForReport] = useState<StudentWithAttendance | null>(null);
+
   const loadData = useCallback(async (guruUser: User) => {
     setLoading(true);
     const today = getLocalDateString();
@@ -65,11 +69,11 @@ export default function DashboardGuruPage() {
         return;
       }
 
-      // 3. Ambil absensi hari ini untuk para siswa
+      // 3. Ambil absensi hari ini beserta laporannya untuk para siswa
       const studentIds = studentList.map((s) => s.id);
       const { data: attList, error: aErr } = await supabase
         .from('attendances')
-        .select('*')
+        .select('*, reports(*)')
         .in('user_id', studentIds)
         .eq('tanggal_absen', today);
 
@@ -116,6 +120,19 @@ export default function DashboardGuruPage() {
     if (!isoStr) return '-';
     const date = new Date(isoStr);
     return `${date.getHours().toString().padStart(2, '0')}.${date.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  // Format tanggal (misal: 12/11/26)
+  const formatTanggal = (dateStr?: string | null) => {
+    if (!dateStr) return '-';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year.slice(2)}`;
+  };
+
+  // Buka modal detail laporan siswa
+  const handleOpenReportModal = (student: StudentWithAttendance) => {
+    setSelectedStudentForReport(student);
+    setShowReportModal(true);
   };
 
   // Buka modal filter & sinkronisasi siswa yang terpilih
@@ -297,11 +314,11 @@ export default function DashboardGuruPage() {
           <table className="w-full border-collapse text-center">
             <thead>
               <tr className="bg-[#EBEBEB] border-b border-gray-400">
-                <th className="py-4 px-4 font-normal text-[15px] text-black w-[28%]">Siswa</th>
+                <th className="py-4 px-4 font-normal text-[15px] text-black w-[24%]">Siswa</th>
                 <th className="py-4 px-4 font-normal text-[15px] text-black w-[24%]">DUDI</th>
-                <th className="py-4 px-4 font-normal text-[15px] text-black w-[16%]">Status</th>
                 <th className="py-4 px-4 font-normal text-[15px] text-black w-[16%]">Masuk</th>
                 <th className="py-4 px-4 font-normal text-[15px] text-black w-[16%]">Pulang</th>
+                <th className="py-4 px-4 font-normal text-[15px] text-black w-[20%]">Laporan</th>
               </tr>
             </thead>
             <tbody>
@@ -327,13 +344,19 @@ export default function DashboardGuruPage() {
                       {item.companies?.company_name || '-'}
                     </td>
                     <td className="py-4 px-4 text-center text-[15px] text-black font-normal">
-                      {item.attendance?.status_kehadiran || '-'}
-                    </td>
-                    <td className="py-4 px-4 text-center text-[15px] text-black font-normal">
                       {formatJam(item.attendance?.jam_masuk)}
                     </td>
                     <td className="py-4 px-4 text-center text-[15px] text-black font-normal">
                       {formatJam(item.attendance?.jam_pulang)}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReportModal(item)}
+                        className="bg-[#000066] text-white px-5 py-2 rounded-lg font-normal text-[14px] hover:bg-[#000044] transition-colors"
+                      >
+                        Lihat Laporan
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -342,6 +365,97 @@ export default function DashboardGuruPage() {
           </table>
         </div>
       </div>
+
+      {/* Modal Detail Laporan Siswa */}
+      {showReportModal && selectedStudentForReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4">
+          <div className="bg-[#EDEDED] w-full max-w-[440px] rounded-[28px] p-6 sm:p-7 relative shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#000066]/30 [&::-webkit-scrollbar-thumb]:rounded-full border border-gray-300">
+            {/* Tombol Kembali (Panah Kiri) */}
+            <button 
+              type="button"
+              onClick={() => setShowReportModal(false)} 
+              className="absolute top-6 left-6 text-black hover:opacity-70 transition-opacity p-1 flex items-center justify-center"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+
+            {/* Header: Judul & Tanggal/Status */}
+            <div className="text-center pt-0.5 mb-5">
+              <h2 className="text-[22px] font-semibold text-black">Detail Laporan</h2>
+              <p className="text-[13px] text-black font-normal mt-1">
+                Tanggal: {formatTanggal(selectedStudentForReport.attendance?.tanggal_absen || getLocalDateString())} | Status: {selectedStudentForReport.attendance?.status_kehadiran || 'Belum Absen'}
+              </p>
+            </div>
+
+            {/* Konten Laporan */}
+            {selectedStudentForReport.attendance?.reports && selectedStudentForReport.attendance.reports.length > 0 ? (
+              (() => {
+                const rep = selectedStudentForReport.attendance.reports[0];
+                return (
+                  <div className="flex flex-col gap-4">
+                    {/* Judul Laporan */}
+                    <div>
+                      <label className="block text-[14px] font-medium text-black mb-1.5">
+                        Judul Laporan Kegiatan :
+                      </label>
+                      <div className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black shadow-xs">
+                        {rep.judul_laporan || '-'}
+                      </div>
+                    </div>
+
+                    {/* Deskripsi Laporan */}
+                    <div>
+                      <label className="block text-[14px] font-medium text-black mb-1.5">
+                        Deskripsi Laporan :
+                      </label>
+                      <div className="w-full bg-white rounded-xl p-4 text-[14px] text-black leading-relaxed shadow-xs min-h-[100px] whitespace-pre-wrap">
+                        {rep.deskripsi_laporan || 'Tidak ada deskripsi laporan.'}
+                      </div>
+                    </div>
+
+                    {/* Foto Bukti Kegiatan */}
+                    <div>
+                      <label className="block text-[14px] font-medium text-black mb-1.5">
+                        Foto Bukti Kegiatan :
+                      </label>
+                      <div className="w-full bg-white rounded-xl p-3 shadow-xs flex items-center justify-center min-h-[140px] overflow-hidden">
+                        {rep.bukti_laporan ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img 
+                            src={rep.bukti_laporan} 
+                            alt="Bukti Laporan" 
+                            className="max-h-[180px] w-auto max-w-full object-contain rounded-lg"
+                          />
+                        ) : (
+                          <span className="text-[13px] text-gray-400">Tidak ada foto bukti kegiatan</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="py-12 text-center text-gray-500 text-[14px]">
+                Belum ada laporan kegiatan yang dikirim oleh siswa untuk hari ini.
+              </div>
+            )}
+
+            {/* Tombol Tutup di Kanan Bawah */}
+            <div className="mt-5 flex justify-end">
+              <button 
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="bg-[#000066] text-white px-8 py-2.5 rounded-xl font-medium text-[14px] hover:bg-[#000044] transition-colors shadow-sm"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
