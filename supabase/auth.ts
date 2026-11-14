@@ -50,7 +50,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
   try {
     const { data, error } = await supabase
       .from('user_accounts')
-      .select('id, username, company_id, role, status, first_login, pending_company_id, pending_company_status, companies(*)')
+      .select('id, username, company_id, role, status, first_login, pending_company_id, pending_company_status, companies:company_id(*)')
       .eq('id', current.id)
       .maybeSingle();
 

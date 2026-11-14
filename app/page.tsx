@@ -79,7 +79,7 @@ export default function HomePage() {
     try {
       const { data: user, error: queryError } = await supabase
         .from('user_accounts')
-        .select('id, username, password, company_id, role, status, first_login, companies(*)')
+        .select('id, username, password, company_id, role, status, first_login, companies:company_id(*)')
         .eq('username', username.trim())
         .eq('password', password)
         .maybeSingle();
