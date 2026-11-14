@@ -237,65 +237,87 @@ export default function LaporanPage() {
 
       {/* Modal Detail Laporan */}
       {modalOpen && selectedAttendance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-[550px] rounded-2xl p-6 md:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4">
+          <div className="bg-[#EDEDED] w-full max-w-[440px] rounded-[28px] p-6 sm:p-7 relative shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#000066]/30 [&::-webkit-scrollbar-thumb]:rounded-full border border-gray-300">
+            {/* Tombol Kembali (Panah Kiri) */}
             <button 
+              type="button"
               onClick={() => setModalOpen(false)} 
-              className="absolute top-5 right-5 text-gray-500 hover:text-black transition-colors"
+              className="absolute top-6 left-6 text-black hover:opacity-70 transition-opacity p-1 flex items-center justify-center"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
             </button>
 
-            <h3 className="text-[20px] font-semibold text-black mb-1">Detail Laporan Kegiatan</h3>
-            <p className="text-[13px] text-gray-500 mb-6">
-              Tanggal: {formatTanggal(selectedAttendance.tanggal_absen)} | Status: {selectedAttendance.status_kehadiran}
-            </p>
+            {/* Header: Judul & Tanggal/Status */}
+            <div className="text-center pt-0.5 mb-5">
+              <h2 className="text-[22px] font-semibold text-black">Detail Laporan</h2>
+              <p className="text-[13px] text-black font-normal mt-1">
+                Tanggal: {formatTanggal(selectedAttendance.tanggal_absen)} | Status: {selectedAttendance.status_kehadiran || '-'}
+              </p>
+            </div>
 
+            {/* Konten Laporan */}
             {selectedAttendance.reports && selectedAttendance.reports.length > 0 ? (
-              selectedAttendance.reports.map((rep) => (
-                <div key={rep.id} className="flex flex-col gap-4">
-                  <div>
-                    <label className="text-[13px] font-medium text-gray-500 block mb-1">Judul Laporan</label>
-                    <div className="text-[16px] font-semibold text-black bg-[#EDEDED] p-3 rounded-xl">
-                      {rep.judul_laporan}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[13px] font-medium text-gray-500 block mb-1">Deskripsi Aktivitas</label>
-                    <div className="text-[14px] text-black bg-[#EDEDED] p-3 rounded-xl whitespace-pre-wrap leading-relaxed">
-                      {rep.deskripsi_laporan}
-                    </div>
-                  </div>
-
-                  {rep.bukti_laporan && (
+              (() => {
+                const rep = selectedAttendance.reports[0];
+                return (
+                  <div className="flex flex-col gap-4">
+                    {/* Judul Laporan */}
                     <div>
-                      <label className="text-[13px] font-medium text-gray-500 block mb-1">Foto Bukti Kegiatan</label>
-                      <div className="border border-gray-200 rounded-xl overflow-hidden p-2 bg-gray-50">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={rep.bukti_laporan} 
-                          alt="Bukti Laporan" 
-                          className="w-full max-h-[250px] object-contain rounded-lg"
-                        />
+                      <label className="block text-[14px] font-medium text-black mb-1.5">
+                        Judul Laporan Kegiatan :
+                      </label>
+                      <div className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black shadow-xs">
+                        {rep.judul_laporan || '-'}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))
+
+                    {/* Deskripsi Laporan */}
+                    <div>
+                      <label className="block text-[14px] font-medium text-black mb-1.5">
+                        Deskripsi Laporan :
+                      </label>
+                      <div className="w-full bg-white rounded-xl p-4 text-[14px] text-black leading-relaxed shadow-xs min-h-[100px] whitespace-pre-wrap">
+                        {rep.deskripsi_laporan || 'Tidak ada deskripsi laporan.'}
+                      </div>
+                    </div>
+
+                    {/* Foto Bukti Kegiatan */}
+                    <div>
+                      <label className="block text-[14px] font-medium text-black mb-1.5">
+                        Foto Bukti Kegiatan :
+                      </label>
+                      <div className="w-full bg-white rounded-xl p-3 shadow-xs flex items-center justify-center min-h-[140px] overflow-hidden">
+                        {rep.bukti_laporan ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img 
+                            src={rep.bukti_laporan} 
+                            alt="Bukti Laporan" 
+                            className="max-h-[180px] w-auto max-w-full object-contain rounded-lg"
+                          />
+                        ) : (
+                          <span className="text-[13px] text-gray-400">Tidak ada foto bukti kegiatan</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
             ) : (
-              <div className="py-8 text-center text-gray-500">
-                Belum ada laporan kegiatan yang dikirim untuk absensi ini. Laporan dibuat saat melakukan absensi pulang.
+              <div className="py-12 text-center text-gray-500 text-[14px]">
+                Belum ada laporan kegiatan yang dikirim untuk absensi ini.
               </div>
             )}
 
-            <div className="mt-8 flex justify-end">
+            {/* Tombol Tutup di Kanan Bawah */}
+            <div className="mt-5 flex justify-end">
               <button 
+                type="button"
                 onClick={() => setModalOpen(false)}
-                className="bg-[#000066] text-white px-8 py-2.5 rounded-xl font-medium text-[15px] hover:bg-[#000044] transition-colors"
+                className="bg-[#000066] text-white px-8 py-2.5 rounded-xl font-medium text-[14px] hover:bg-[#000044] transition-colors shadow-sm"
               >
                 Tutup
               </button>

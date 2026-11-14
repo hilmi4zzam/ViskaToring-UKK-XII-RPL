@@ -98,13 +98,13 @@ export default function HomePage() {
       if (user) {
         // Role Guard: Tolak akun Admin dari portal login utama siswa & guru
         if (user.role === 'admin') {
-          setError('Akun Administrator tidak dapat masuk melalui portal ini. Silakan masuk melalui halaman login Admin.');
+          setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
           return;
         }
 
         // Cek status persetujuan dari Admin
         if (user.status === 'pending') {
-          setError('Akun Anda masih dalam proses peninjauan oleh Admin. Anda baru dapat masuk setelah pengajuan disetujui.');
+          setError('Akun Anda masih dalam proses peninjauan oleh Admin. Anda dapat masuk setelah pengajuan disetujui.');
           return;
         }
 
@@ -240,14 +240,12 @@ export default function HomePage() {
           
           {/* Header Logo */}
           <div className="flex items-center gap-3 mb-8">
-            <button
-              type="button"
+            <div
               onClick={handleLogoClick}
-              className="outline-none focus:outline-none cursor-default select-none active:scale-95 transition-transform p-0.5 rounded-lg"
-              title="ViskaToring"
+              className="select-none cursor-default"
             >
               <Image src="/smk.svg" alt="SMK Logo" width={36} height={36} priority className="w-[36px] h-auto pointer-events-none" />
-            </button>
+            </div>
             <h2 className="text-[28px] font-semibold text-black select-none">ViskaToring</h2>
           </div>
 
