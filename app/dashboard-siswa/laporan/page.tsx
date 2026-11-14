@@ -221,9 +221,13 @@ export default function LaporanPage() {
                             setSelectedAttendance(att);
                             setModalOpen(true);
                           }}
-                          className="bg-[#000066] text-white px-5 py-2 rounded-lg font-normal text-[14px] hover:bg-[#000044] transition-colors"
+                          className={`${
+                            att.jam_masuk 
+                              ? 'bg-[#000066] hover:bg-[#000044]' 
+                              : 'bg-[#CC2929] hover:bg-[#B32424]'
+                          } text-white px-5 py-2 rounded-lg font-normal text-[14px] transition-colors shadow-xs`}
                         >
-                          Lihat Laporan
+                          {att.jam_masuk ? 'Lihat Laporan' : 'Belum Absen'}
                         </button>
                       </div>
                     </td>

@@ -350,13 +350,23 @@ export default function DashboardGuruPage() {
                       {formatJam(item.attendance?.jam_pulang)}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenReportModal(item)}
-                        className="bg-[#000066] text-white px-5 py-2 rounded-lg font-normal text-[14px] hover:bg-[#000044] transition-colors"
-                      >
-                        Lihat Laporan
-                      </button>
+                      {item.attendance?.jam_masuk ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReportModal(item)}
+                          className="bg-[#000066] text-white px-5 py-2 rounded-lg font-normal text-[14px] hover:bg-[#000044] transition-colors shadow-xs"
+                        >
+                          Lihat Laporan
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReportModal(item)}
+                          className="bg-[#CC2929] text-white px-5 py-2 rounded-lg font-normal text-[14px] hover:bg-[#B32424] transition-colors shadow-xs"
+                        >
+                          Belum Absen
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
