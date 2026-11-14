@@ -16,7 +16,7 @@ export default function PengaturanGuruPage() {
   const [showOldPassPassword, setShowOldPassPassword] = useState(false);
   const [showNewPassPassword, setShowNewPassPassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
-  
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -101,19 +101,18 @@ export default function PengaturanGuruPage() {
     clearStoredUser();
     router.push('/');
   };
-  
+
   const showOldPassword = isNewPasswordFocused || isOldPasswordFocused || newPassword.length > 0 || oldPassword.length > 0;
 
   return (
     <div className="w-full max-w-[480px] mx-auto flex flex-col gap-5 pt-8 pb-10">
-      
+
       {/* Feedback Message */}
       {message && (
-        <div className={`p-4 rounded-xl text-[14px] font-medium border ${
-          message.type === 'success' 
-            ? 'bg-green-50 text-green-700 border-green-200' 
-            : 'bg-red-50 text-red-600 border-red-200'
-        }`}>
+        <div className={`p-4 rounded-xl text-[14px] font-medium border ${message.type === 'success'
+          ? 'bg-green-50 text-green-700 border-green-200'
+          : 'bg-red-50 text-red-600 border-red-200'
+          }`}>
           {message.text}
         </div>
       )}
@@ -122,15 +121,15 @@ export default function PengaturanGuruPage() {
       <div className="flex flex-col gap-2">
         <label className="text-[15px] font-medium text-black">Nama Akun :</label>
         <div className="relative">
-          <input 
-            type="text" 
-            value={currentUser?.username || "Memuat akun..."} 
-            readOnly 
+          <input
+            type="text"
+            value={currentUser?.username || "Memuat akun..."}
+            readOnly
             className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none cursor-not-allowed font-medium"
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+              <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
             </svg>
           </div>
         </div>
@@ -140,7 +139,7 @@ export default function PengaturanGuruPage() {
       <div className="flex flex-col gap-2">
         <label className="text-[15px] font-medium text-black">Perbarui Kata Sandi :</label>
         <div className="relative">
-          <input 
+          <input
             type={showNewPassPassword ? "text" : "password"}
             value={newPassword}
             placeholder="Ketik kata sandi baru..."
@@ -149,7 +148,7 @@ export default function PengaturanGuruPage() {
             onBlur={() => setIsNewPasswordFocused(false)}
             className="w-full bg-[#F0F0F0] text-black text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none"
           />
-          <button 
+          <button
             type="button"
             onClick={() => setShowNewPassPassword(!showNewPassPassword)}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-black cursor-pointer"
@@ -173,7 +172,7 @@ export default function PengaturanGuruPage() {
       <div className={`flex flex-col gap-1.5 transition-all duration-300 overflow-hidden ${showOldPassword ? 'max-h-[100px] opacity-100 mt-1' : 'max-h-0 opacity-0 m-0'}`}>
         <label className="text-[13px] font-medium text-black px-2">Kata Sandi Lama (Konfirmasi) :</label>
         <div className="relative w-[96%] ml-[2%]">
-          <input 
+          <input
             type={showOldPassPassword ? "text" : "password"}
             value={oldPassword}
             placeholder="Masukkan kata sandi saat ini..."
@@ -182,7 +181,7 @@ export default function PengaturanGuruPage() {
             onBlur={() => setIsOldPasswordFocused(false)}
             className="w-full bg-[#F0F0F0] text-black text-[15px] py-2.5 pl-4 pr-10 rounded-xl outline-none"
           />
-          <button 
+          <button
             type="button"
             onClick={() => setShowOldPassPassword(!showOldPassPassword)}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-black cursor-pointer"
@@ -206,7 +205,7 @@ export default function PengaturanGuruPage() {
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-3">
-        <button 
+        <button
           type="button"
           onClick={handleUpdateData}
           disabled={loading}
@@ -221,7 +220,7 @@ export default function PengaturanGuruPage() {
             'Ajukan Pembaruan Data'
           )}
         </button>
-        <button 
+        <button
           type="button"
           onClick={handleLogout}
           className="w-full bg-[#CC2929] text-white text-[15px] font-medium py-3.5 rounded-xl hover:bg-[#B32424] transition-colors shadow-sm"
