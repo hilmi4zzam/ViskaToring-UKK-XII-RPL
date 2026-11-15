@@ -159,14 +159,9 @@ export default function KelolaBeritaDudiPage() {
       {/* Header Container */}
       <div className="w-full bg-white border border-gray-400 rounded-[24px] p-6 sm:p-7 shadow-xs flex flex-col">
         <div className="flex items-center justify-between pb-3.5 border-b border-gray-300">
-          <div>
-            <h3 className="text-[17px] font-medium text-black">
-              Beritakan kepada siswa magang {companyName} :
-            </h3>
-            <p className="text-[13px] text-gray-500 mt-0.5">
-              Pengumuman ini hanya akan dapat dilihat oleh siswa yang magang di perusahaan Anda.
-            </p>
-          </div>
+          <h3 className="text-[17px] font-medium text-black">
+            Beritakan kepada siswa magang {companyName} :
+          </h3>
           <button
             type="button"
             onClick={handleOpenCreateModal}
