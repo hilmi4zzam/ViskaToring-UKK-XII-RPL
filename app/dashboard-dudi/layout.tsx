@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { getStoredUser, fetchCurrentUser } from '@/supabase/auth';
+import { getStoredUser, fetchCurrentUser, isFirstLogin } from '@/supabase/auth';
 import { User } from '@/supabase/types';
 
 export default function DashboardDudiLayout({ children }: { children: React.ReactNode }) {
@@ -29,6 +29,11 @@ export default function DashboardDudiLayout({ children }: { children: React.Reac
         } else {
           router.replace('/dashboard-siswa');
         }
+        return;
+      }
+
+      if (isFirstLogin(stored)) {
+        router.push('/konfigurasi-dudi');
         return;
       }
 

@@ -52,17 +52,19 @@ export default function HomePage() {
     if (user) {
       if (user.role === 'admin') {
         router.replace('/dashboard-admin');
-      } else if (user.role === 'dudi') {
-        router.replace('/dashboard-dudi');
       } else if (isFirstLogin(user)) {
         if (user.role === 'guru') {
           router.replace('/konfigurasi-guru');
+        } else if (user.role === 'dudi') {
+          router.replace('/konfigurasi-dudi');
         } else {
           router.replace('/konfigurasi-siswa');
         }
       } else {
         if (user.role === 'guru') {
           router.replace('/dashboard-guru');
+        } else if (user.role === 'dudi') {
+          router.replace('/dashboard-dudi');
         } else {
           router.replace('/dashboard-siswa');
         }
@@ -130,17 +132,19 @@ export default function HomePage() {
         setStoredUser(loggedUser);
 
         // Jika terdeteksi sebagai login pertama kali (first_login = true atau company belum ditentukan bagi siswa)
-        if (loggedUser.role === 'dudi') {
-          router.push('/dashboard-dudi');
-        } else if (isFirstLogin(loggedUser)) {
+        if (isFirstLogin(loggedUser)) {
           if (loggedUser.role === 'guru') {
             router.push('/konfigurasi-guru');
+          } else if (loggedUser.role === 'dudi') {
+            router.push('/konfigurasi-dudi');
           } else {
             router.push('/konfigurasi-siswa');
           }
         } else {
           if (loggedUser.role === 'guru') {
             router.push('/dashboard-guru');
+          } else if (loggedUser.role === 'dudi') {
+            router.push('/dashboard-dudi');
           } else {
             router.push('/dashboard-siswa');
           }
