@@ -21,10 +21,11 @@ export default function KelolaAnggotaPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [totalSiswa, setTotalSiswa] = useState<number>(0);
   const [totalGuru, setTotalGuru] = useState<number>(0);
+  const [totalDudi, setTotalDudi] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
-  // Filter Dropdown: 'Semua' | 'Siswa' | 'Guru'
-  const [filterRole, setFilterRole] = useState<'Semua' | 'Siswa' | 'Guru'>('Semua');
+  // Filter Dropdown: 'Semua' | 'Siswa' | 'Guru' | 'Dudi'
+  const [filterRole, setFilterRole] = useState<'Semua' | 'Siswa' | 'Guru' | 'Dudi'>('Semua');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +36,7 @@ export default function KelolaAnggotaPage() {
 
   // Edit Member Form States
   const [editUsername, setEditUsername] = useState('');
-  const [editRole, setEditRole] = useState<'siswa' | 'guru'>('siswa');
+  const [editRole, setEditRole] = useState<'siswa' | 'guru' | 'dudi'>('siswa');
   const [editCompanyId, setEditCompanyId] = useState<number | null>(null);
   const [editDudiQuery, setEditDudiQuery] = useState('');
   const [showEditDudiDropdown, setShowEditDudiDropdown] = useState(false);
@@ -71,7 +72,16 @@ export default function KelolaAnggotaPage() {
 
       setTotalGuru(gCount || 0);
 
-      // 3. Ambil daftar companies
+      // 3. Total DUDI (status: approved)
+      const { count: dCount } = await supabase
+        .from('user_accounts')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'dudi')
+        .eq('status', 'approved');
+
+      setTotalDudi(dCount || 0);
+
+      // 4. Ambil daftar companies
       const { data: compList } = await supabase
         .from('companies')
         .select('*')
@@ -81,11 +91,11 @@ export default function KelolaAnggotaPage() {
         setCompanies(compList);
       }
 
-      // 4. Ambil seluruh anggota (role siswa & guru, status: approved)
+      // 5. Ambil seluruh anggota (role siswa, guru & dudi, status: approved)
       const { data: memberList, error: mErr } = await supabase
         .from('user_accounts')
         .select('id, username, role, company_id, status, created_at, companies:company_id(*)')
-        .in('role', ['siswa', 'guru'])
+        .in('role', ['siswa', 'guru', 'dudi'])
         .eq('status', 'approved')
         .order('username', { ascending: true });
 
@@ -121,6 +131,7 @@ export default function KelolaAnggotaPage() {
   const filteredMembers = members.filter((item) => {
     if (filterRole === 'Siswa') return item.role === 'siswa';
     if (filterRole === 'Guru') return item.role === 'guru';
+    if (filterRole === 'Dudi') return item.role === 'dudi';
     return true; // 'Semua'
   });
 
@@ -138,7 +149,7 @@ export default function KelolaAnggotaPage() {
   const handleOpenEdit = (member: MemberItem) => {
     setSelectedMember(member);
     setEditUsername(member.username);
-    setEditRole(member.role === 'guru' ? 'guru' : 'siswa');
+    setEditRole(member.role === 'guru' ? 'guru' : member.role === 'dudi' ? 'dudi' : 'siswa');
     setEditCompanyId(member.company_id ?? null);
     setEditDudiQuery(member.companies?.company_name || '');
     setShowEditDudiDropdown(false);
@@ -210,7 +221,7 @@ export default function KelolaAnggotaPage() {
       const updatePayload: Record<string, unknown> = {
         username: editUsername.trim(),
         role: editRole,
-        company_id: editRole === 'siswa' ? editCompanyId : null,
+        company_id: (editRole === 'siswa' || editRole === 'dudi') ? editCompanyId : null,
       };
 
       const { error } = await supabase
@@ -327,7 +338,7 @@ export default function KelolaAnggotaPage() {
             {/* Dropdown Menu */}
             {showFilterDropdown && (
               <div className="absolute top-full left-0 mt-1.5 w-36 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-20">
-                {(['Semua', 'Siswa', 'Guru'] as const).map((r) => (
+                {(['Semua', 'Siswa', 'Guru', 'Dudi'] as const).map((r) => (
                   <button
                     key={r}
                     type="button"
@@ -349,7 +360,7 @@ export default function KelolaAnggotaPage() {
           </div>
         </div>
 
-        {/* Kanan: 2 Total Cards */}
+        {/* Kanan: 3 Total Cards */}
         <div className="flex items-center gap-4">
           {/* Card Total Siswa */}
           <div className="bg-white border border-gray-400 rounded-[20px] py-3.5 px-6 min-w-[130px] flex flex-col items-center justify-center shadow-xs">
@@ -365,6 +376,14 @@ export default function KelolaAnggotaPage() {
               {loading ? '...' : totalGuru}
             </span>
             <span className="text-[13px] text-black font-normal">Total Guru</span>
+          </div>
+
+          {/* Card Total DUDI */}
+          <div className="bg-white border border-gray-400 rounded-[20px] py-3.5 px-6 min-w-[130px] flex flex-col items-center justify-center shadow-xs">
+            <span className="text-[40px] font-bold text-black leading-none mb-1">
+              {loading ? '...' : totalDudi}
+            </span>
+            <span className="text-[13px] text-black font-normal">Total DUDI</span>
           </div>
         </div>
       </div>
@@ -411,10 +430,10 @@ export default function KelolaAnggotaPage() {
                     {item.username}
                   </td>
                   <td className="py-4 px-4 text-center text-[15px] text-black font-normal capitalize">
-                    {item.role === 'guru' ? 'Guru' : 'Siswa'}
+                    {item.role === 'guru' ? 'Guru' : item.role === 'dudi' ? 'Dudi' : 'Siswa'}
                   </td>
                   <td className="py-4 px-4 text-center text-[15px] text-black font-normal truncate max-w-[180px]">
-                    {item.companies?.company_name || '-'}
+                    {item.role === 'guru' ? '-' : (item.companies?.company_name || '-')}
                   </td>
                   <td className="py-4 px-4 text-center">
                     <div className="flex items-center justify-center gap-3">
@@ -632,15 +651,24 @@ export default function KelolaAnggotaPage() {
                   </div>
                   <span>Guru Pembimbing</span>
                 </label>
+                <label 
+                  className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-black"
+                  onClick={() => setEditRole('dudi')}
+                >
+                  <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
+                    {editRole === 'dudi' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
+                  </div>
+                  <span>Mitra DUDI</span>
+                </label>
               </div>
             </div>
 
-            {/* Field 3: Dudi (Hanya untuk siswa) */}
+            {/* Field 3: Dudi (Untuk siswa & mitra dudi) */}
             <div className="mb-8 relative">
               <label className="block text-[14px] font-medium text-black mb-1.5">
                 Dudi :
               </label>
-              {editRole === 'siswa' ? (
+              {editRole === 'siswa' || editRole === 'dudi' ? (
                 <div className="relative">
                   <input
                     type="text"

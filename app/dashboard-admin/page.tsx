@@ -33,7 +33,7 @@ export default function DashboardAdminPage() {
   const [modalType, setModalType] = useState<'approve_user' | 'reject_user' | 'approve_dudi' | 'reject_dudi' | null>(null);
   const [selectedUser, setSelectedUser] = useState<PendingUserAccount | null>(null);
   const [selectedDudi, setSelectedDudi] = useState<PendingDudiChange | null>(null);
-  const [selectedRole, setSelectedRole] = useState<'siswa' | 'guru'>('siswa');
+  const [selectedRole, setSelectedRole] = useState<'siswa' | 'guru' | 'dudi'>('siswa');
   const [actionLoading, setActionLoading] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -115,7 +115,7 @@ export default function DashboardAdminPage() {
   // Handler Buka Modal
   const handleOpenApproveUser = (user: PendingUserAccount) => {
     setSelectedUser(user);
-    setSelectedRole(user.role === 'guru' ? 'guru' : 'siswa');
+    setSelectedRole(user.role === 'guru' ? 'guru' : user.role === 'dudi' ? 'dudi' : 'siswa');
     setModalType('approve_user');
   };
 
@@ -484,6 +484,15 @@ export default function DashboardAdminPage() {
                     {selectedRole === 'guru' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
                   </div>
                   <span>Guru Pembimbing</span>
+                </label>
+                <label 
+                  className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-black"
+                  onClick={() => setSelectedRole('dudi')}
+                >
+                  <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
+                    {selectedRole === 'dudi' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
+                  </div>
+                  <span>Dudi</span>
                 </label>
               </div>
             </div>
