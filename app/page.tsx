@@ -37,7 +37,7 @@ export default function HomePage() {
     const nextCount = logoClickCount + 1;
     if (nextCount >= 7) {
       setLogoClickCount(0);
-      router.push('/admin/login-admin');
+      router.push('/login-admin');
     } else {
       setLogoClickCount(nextCount);
       logoTimerRef.current = setTimeout(() => {

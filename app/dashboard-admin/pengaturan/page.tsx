@@ -23,7 +23,7 @@ export default function PengaturanAdminPage() {
   useEffect(() => {
     const user = getStoredUser();
     if (!user) {
-      router.push('/admin/login-admin');
+      router.push('/login-admin');
       return;
     }
     async function loadData() {
@@ -95,7 +95,7 @@ export default function PengaturanAdminPage() {
 
   const handleLogout = () => {
     clearStoredUser();
-    router.push('/admin/login-admin');
+    router.push('/login-admin');
   };
 
   const showOldPassword = isNewPasswordFocused || newPassword.length > 0;

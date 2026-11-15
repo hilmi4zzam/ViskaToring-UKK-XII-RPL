@@ -16,7 +16,7 @@ export default function DashboardAdminLayout({ children }: { children: React.Rea
     const loadUser = async () => {
       const stored = getStoredUser();
       if (!stored) {
-        router.push('/admin/login-admin');
+        router.push('/login-admin');
         return;
       }
 
