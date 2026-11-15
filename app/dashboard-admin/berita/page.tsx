@@ -11,27 +11,24 @@ const DEFAULT_NEWS: NewsItem[] = [
     id: 1,
     title: 'Anak PKL wajib menaati aturan DUDI.',
     content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-    source_type: 'sekolah',
+    kategori: 'siswa',
     company_id: null,
-    target_role: 'siswa',
     created_at: '2026-09-14T08:00:00.000Z',
   },
   {
     id: 2,
     title: 'Anak PKL wajib menaati aturan DUDI.',
     content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-    source_type: 'sekolah',
+    kategori: 'guru',
     company_id: null,
-    target_role: 'guru',
     created_at: '2026-09-14T08:00:00.000Z',
   },
   {
     id: 3,
     title: 'Anak PKL wajib menaati aturan DUDI.',
     content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-    source_type: 'sekolah',
+    kategori: 'guru',
     company_id: null,
-    target_role: 'guru',
     created_at: '2026-09-14T08:00:00.000Z',
   },
 ];
@@ -62,11 +59,11 @@ export default function KelolaBeritaPage() {
 
   const loadData = useCallback(async () => {
     try {
-      // 1. Coba ambil dari Supabase tabel 'news' (khusus source_type = 'sekolah')
+      // Ambil berita sekolah (kategori: 'siswa' atau 'guru')
       const { data, error } = await supabase
         .from('news')
         .select('*')
-        .eq('source_type', 'sekolah')
+        .in('kategori', ['siswa', 'guru'])
         .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
@@ -74,7 +71,7 @@ export default function KelolaBeritaPage() {
         return;
       }
 
-      // 2. Fallback ke LocalStorage jika tabel belum dibuat atau offline
+      // Fallback ke LocalStorage jika tabel belum dibuat atau offline
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
@@ -86,7 +83,7 @@ export default function KelolaBeritaPage() {
         }
       }
 
-      // 3. Inisialisasi data default
+      // Inisialisasi data default
       setNewsList(DEFAULT_NEWS);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_NEWS));
     } catch {
@@ -143,22 +140,20 @@ export default function KelolaBeritaPage() {
       id: Date.now(),
       title: judulInput.trim(),
       content: deskripsiInput.trim(),
-      source_type: 'sekolah',
+      kategori: targetType,
       company_id: null,
-      target_role: targetType,
       created_at: new Date().toISOString(),
     };
 
     try {
-      // Coba simpan ke Supabase tabel news
+      // Simpan ke Supabase tabel news dengan kategori yang sesuai
       const { data, error } = await supabase
         .from('news')
         .insert({
           title: newItem.title,
           content: newItem.content,
-          source_type: 'sekolah',
+          kategori: newItem.kategori,
           company_id: null,
-          target_role: newItem.target_role,
           created_at: newItem.created_at,
         })
         .select();
@@ -185,7 +180,6 @@ export default function KelolaBeritaPage() {
     setActionLoading(true);
 
     try {
-      // Coba hapus di Supabase
       await supabase.from('news').delete().eq('id', selectedNews.id);
     } catch (err) {
       console.warn('Gagal hapus di Supabase news, fallback ke lokal:', err);
@@ -199,9 +193,9 @@ export default function KelolaBeritaPage() {
     handleCloseModal();
   };
 
-  // Filter per target
-  const newsSiswa = newsList.filter((b) => b.target_role === 'siswa' || b.target_role === 'semua');
-  const newsGuru = newsList.filter((b) => b.target_role === 'guru' || b.target_role === 'semua');
+  // Filter per kategori
+  const newsSiswa = newsList.filter((b) => b.kategori === 'siswa');
+  const newsGuru = newsList.filter((b) => b.kategori === 'guru');
 
   return (
     <div className="w-full flex flex-col gap-8 pb-10">

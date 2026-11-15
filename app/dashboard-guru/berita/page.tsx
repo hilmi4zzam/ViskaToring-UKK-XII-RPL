@@ -22,12 +22,11 @@ export default function BeritaPembimbingPage() {
   useEffect(() => {
     const fetchBerita = async () => {
       try {
-        // GURU HANYA DAPAT BERITA DARI SEKOLAH (source_type = 'sekolah')
+        // GURU HANYA MENGAMBIL BERITA DENGAN KATEGORI 'guru'
         const { data, error } = await supabase
           .from('news')
           .select('*')
-          .eq('source_type', 'sekolah')
-          .in('target_role', ['guru', 'semua'])
+          .eq('kategori', 'guru')
           .order('created_at', { ascending: false });
 
         if (!error && data && data.length > 0) {
@@ -39,12 +38,7 @@ export default function BeritaPembimbingPage() {
         if (saved) {
           try {
             const all = JSON.parse(saved) as NewsItem[];
-            // Filter strictly: hanya dari sekolah dan target guru/semua
-            setNewsList(
-              all.filter(
-                (b) => b.source_type === 'sekolah' && (b.target_role === 'guru' || b.target_role === 'semua')
-              )
-            );
+            setNewsList(all.filter((b) => b.kategori === 'guru'));
             return;
           } catch {
             // ignore
@@ -55,11 +49,7 @@ export default function BeritaPembimbingPage() {
         if (saved) {
           try {
             const all = JSON.parse(saved) as NewsItem[];
-            setNewsList(
-              all.filter(
-                (b) => b.source_type === 'sekolah' && (b.target_role === 'guru' || b.target_role === 'semua')
-              )
-            );
+            setNewsList(all.filter((b) => b.kategori === 'guru'));
           } catch {
             // ignore
           }

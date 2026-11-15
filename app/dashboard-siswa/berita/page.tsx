@@ -24,21 +24,20 @@ export default function BeritaSiswaPage() {
 
   const loadData = useCallback(async (user: User | null) => {
     try {
-      // 1. Ambil Berita Sekolah (source_type = 'sekolah' & target_role IN ('siswa', 'semua'))
+      // 1. Ambil Berita Sekolah (kategori = 'siswa')
       const { data: dataSekolah } = await supabase
         .from('news')
         .select('*')
-        .eq('source_type', 'sekolah')
-        .in('target_role', ['siswa', 'semua'])
+        .eq('kategori', 'siswa')
         .order('created_at', { ascending: false });
 
-      // 2. Ambil Berita DUDI khusus DUDI tempat siswa magang (source_type = 'dudi' & company_id = user.company_id)
+      // 2. Ambil Berita DUDI khusus DUDI tempat siswa magang (kategori = 'dudi' & company_id = user.company_id)
       let dataDudi: NewsItem[] = [];
       if (user?.company_id) {
         const { data: dudiRes } = await supabase
           .from('news')
           .select('*')
-          .eq('source_type', 'dudi')
+          .eq('kategori', 'dudi')
           .eq('company_id', user.company_id)
           .order('created_at', { ascending: false });
         if (dudiRes) dataDudi = dudiRes as NewsItem[];
@@ -55,15 +54,11 @@ export default function BeritaSiswaPage() {
       if (saved) {
         try {
           const all = JSON.parse(saved) as NewsItem[];
-          setNewsSekolah(
-            all.filter(
-              (b) => b.source_type === 'sekolah' && (b.target_role === 'siswa' || b.target_role === 'semua')
-            )
-          );
+          setNewsSekolah(all.filter((b) => b.kategori === 'siswa'));
           if (user?.company_id) {
             setNewsDudi(
               all.filter(
-                (b) => b.source_type === 'dudi' && b.company_id === user.company_id
+                (b) => b.kategori === 'dudi' && b.company_id === user.company_id
               )
             );
           } else {
@@ -81,9 +76,8 @@ export default function BeritaSiswaPage() {
           id: 1,
           title: 'Anak PKL wajib menaati aturan DUDI.',
           content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-          source_type: 'sekolah',
+          kategori: 'siswa',
           company_id: null,
-          target_role: 'siswa',
           created_at: '2026-09-14T08:00:00.000Z',
         },
       ]);
@@ -137,7 +131,7 @@ export default function BeritaSiswaPage() {
       {/* Grid 2 Kolom: Kolom 1 Sekolah, Kolom 2 DUDI */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {/* ======================================================== */}
-        {/* KOLOM 1: Berita dari Sekolah                             */}
+        {/* KOLOM 1: Berita dari Sekolah (kategori = 'siswa')         */}
         {/* ======================================================== */}
         <div className="bg-white border border-gray-400 rounded-[24px] p-6 shadow-xs flex flex-col h-[520px]">
           <div className="flex items-center justify-between pb-3.5 border-b border-gray-300">
@@ -179,7 +173,7 @@ export default function BeritaSiswaPage() {
         </div>
 
         {/* ======================================================== */}
-        {/* KOLOM 2: Berita dari DUDI                                */}
+        {/* KOLOM 2: Berita dari DUDI (kategori = 'dudi')            */}
         {/* ======================================================== */}
         <div className="bg-white border border-gray-400 rounded-[24px] p-6 shadow-xs flex flex-col h-[520px]">
           <div className="flex items-center justify-between pb-3.5 border-b border-gray-300">

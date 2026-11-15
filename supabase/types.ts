@@ -49,10 +49,8 @@ export interface NewsItem {
   id: string | number;
   title: string;
   content: string;
-  source_type: 'sekolah' | 'dudi';
+  kategori: 'siswa' | 'guru' | 'dudi';
   company_id?: number | null;
-  target_role: 'siswa' | 'guru' | 'semua';
-  author_id?: string | null;
   created_at: string;
   companies?: Company | null;
 }
