@@ -365,15 +365,8 @@ export default function KelolaBeritaPage() {
 
             {/* Judul Modal */}
             <h3 className="text-[20px] font-bold text-center text-black mb-6">
-              Tambah Berita
+              Tambah Berita {targetType === 'siswa' ? 'Siswa' : 'Guru'}
             </h3>
-
-            {/* Target Info Badge */}
-            <div className="mb-4 flex items-center justify-center">
-              <span className="text-[12px] font-medium bg-white px-3 py-1 rounded-full text-black border border-gray-300 shadow-xs">
-                Penerima: <strong className="capitalize">{targetType}</strong>
-              </span>
-            </div>
 
             {/* Form Fields */}
             <div className="flex flex-col gap-4">
@@ -459,19 +452,19 @@ export default function KelolaBeritaPage() {
             <div className="flex items-center justify-center gap-4">
               <button
                 type="button"
-                onClick={handleConfirmDelete}
-                disabled={actionLoading}
-                className="w-[120px] py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#CC2929] hover:bg-[#B32424] transition-colors cursor-pointer shadow-md disabled:opacity-50"
-              >
-                {actionLoading ? 'Menghapus...' : 'Hapus'}
-              </button>
-              <button
-                type="button"
                 onClick={handleCloseModal}
                 disabled={actionLoading}
                 className="w-[120px] py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#000066] hover:bg-[#000050] transition-colors cursor-pointer shadow-md disabled:opacity-50"
               >
                 Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={actionLoading}
+                className="w-[120px] py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#CC2929] hover:bg-[#B32424] transition-colors cursor-pointer shadow-md disabled:opacity-50"
+              >
+                {actionLoading ? 'Menghapus...' : 'Hapus'}
               </button>
             </div>
           </div>
