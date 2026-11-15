@@ -1,6 +1,6 @@
 export type StatusKehadiran = 'WFO' | 'WFH' | 'ALPA';
 
-export type UserRole = 'admin' | 'guru' | 'siswa';
+export type UserRole = 'admin' | 'guru' | 'siswa' | 'dudi';
 
 export type UserAccountStatus = 'pending' | 'approved' | 'rejected';
 

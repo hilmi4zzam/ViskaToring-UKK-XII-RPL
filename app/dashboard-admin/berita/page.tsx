@@ -454,7 +454,7 @@ export default function KelolaBeritaPage() {
                 type="button"
                 onClick={handleCloseModal}
                 disabled={actionLoading}
-                className="w-[120px] py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#000066] hover:bg-[#000050] transition-colors cursor-pointer shadow-md disabled:opacity-50"
+                className="w-[120px] py-2.5 rounded-[18px] text-[14px] font-medium text-[#334155] bg-white hover:bg-gray-50 border border-gray-300 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
               >
                 Batal
               </button>
@@ -462,7 +462,7 @@ export default function KelolaBeritaPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={actionLoading}
-                className="w-[120px] py-2.5 rounded-xl text-[14px] font-medium text-white bg-[#CC2929] hover:bg-[#B32424] transition-colors cursor-pointer shadow-md disabled:opacity-50"
+                className="w-[120px] py-2.5 rounded-[18px] text-[14px] font-medium text-white bg-[#CC2929] hover:bg-[#B32424] transition-colors cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {actionLoading ? 'Menghapus...' : 'Hapus'}
               </button>

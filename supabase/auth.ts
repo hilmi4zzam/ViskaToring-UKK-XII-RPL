@@ -62,7 +62,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
       id: data.id,
       username: data.username,
       company_id: data.company_id ?? null,
-      role: (['admin', 'guru', 'siswa'].includes(data.role) ? data.role : 'siswa') as UserRole,
+      role: (['admin', 'guru', 'siswa', 'dudi'].includes(data.role) ? data.role : 'siswa') as UserRole,
       status: (['pending', 'approved', 'rejected'].includes(data.status) ? data.status : 'approved') as UserAccountStatus,
       first_login: data.first_login ?? false,
       pending_company_id: data.pending_company_id ?? null,
