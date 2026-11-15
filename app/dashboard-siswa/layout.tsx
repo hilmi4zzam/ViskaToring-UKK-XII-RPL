@@ -20,6 +20,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return;
       }
 
+      if (stored.role === 'admin') {
+        router.replace('/dashboard-admin');
+        return;
+      }
+
+      if (stored.role === 'dudi') {
+        router.replace('/dashboard-dudi');
+        return;
+      }
+
       if (stored.role === 'guru') {
         router.replace('/dashboard-guru');
         return;

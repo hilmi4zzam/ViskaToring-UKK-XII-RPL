@@ -20,6 +20,16 @@ export default function DashboardGuruLayout({ children }: { children: React.Reac
         return;
       }
 
+      if (stored.role === 'admin') {
+        router.replace('/dashboard-admin');
+        return;
+      }
+
+      if (stored.role === 'dudi') {
+        router.replace('/dashboard-dudi');
+        return;
+      }
+
       // Jika role adalah siswa, alihkan ke dashboard siswa
       if (stored.role === 'siswa') {
         router.replace('/dashboard-siswa');

@@ -22,7 +22,9 @@ export default function DashboardAdminLayout({ children }: { children: React.Rea
 
       // Role guard: pastikan hanya admin yang mengakses
       if (stored.role !== 'admin') {
-        if (stored.role === 'guru') {
+        if (stored.role === 'dudi') {
+          router.replace('/dashboard-dudi');
+        } else if (stored.role === 'guru') {
           router.replace('/dashboard-guru');
         } else {
           router.replace('/dashboard-siswa');

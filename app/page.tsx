@@ -50,7 +50,11 @@ export default function HomePage() {
   useEffect(() => {
     const user = getStoredUser();
     if (user) {
-      if (isFirstLogin(user)) {
+      if (user.role === 'admin') {
+        router.replace('/dashboard-admin');
+      } else if (user.role === 'dudi') {
+        router.replace('/dashboard-dudi');
+      } else if (isFirstLogin(user)) {
         if (user.role === 'guru') {
           router.replace('/konfigurasi-guru');
         } else {
@@ -126,7 +130,9 @@ export default function HomePage() {
         setStoredUser(loggedUser);
 
         // Jika terdeteksi sebagai login pertama kali (first_login = true atau company belum ditentukan bagi siswa)
-        if (isFirstLogin(loggedUser)) {
+        if (loggedUser.role === 'dudi') {
+          router.push('/dashboard-dudi');
+        } else if (isFirstLogin(loggedUser)) {
           if (loggedUser.role === 'guru') {
             router.push('/konfigurasi-guru');
           } else {
