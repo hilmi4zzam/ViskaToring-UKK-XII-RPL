@@ -17,6 +17,7 @@ export default function PengaturanAdminPage() {
   const [oldPassword, setOldPassword] = useState("");
   
   const [loading, setLoading] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
@@ -211,12 +212,59 @@ export default function PengaturanAdminPage() {
         </button>
         <button 
           type="button"
-          onClick={handleLogout}
+          onClick={() => setShowLogoutModal(true)}
           className="w-full bg-[#CC2929] text-white text-[15px] font-medium py-3.5 rounded-xl hover:bg-[#B32424] transition-colors shadow-sm cursor-pointer"
         >
           Keluar
         </button>
       </div>
+
+      {/* Modal Konfirmasi Keluar */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4">
+          <div className="bg-[#EDEDED] w-full max-w-[440px] rounded-[28px] p-7 relative shadow-2xl flex flex-col border border-gray-300">
+            {/* Tombol Kembali (Panah Kiri) */}
+            <button 
+              type="button"
+              onClick={() => setShowLogoutModal(false)}
+              className="absolute top-7 left-7 text-black hover:opacity-70 transition-opacity p-1 flex items-center justify-center cursor-pointer"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+
+            {/* Header: Judul */}
+            <div className="text-center pt-0.5 mb-6">
+              <h2 className="text-[22px] font-semibold text-black">Keluar Akun</h2>
+            </div>
+
+            {/* Konten */}
+            <p className="text-[14px] text-black leading-relaxed mb-8 text-center sm:text-left">
+              Yakin untuk keluar dari akun ini?
+            </p>
+
+            {/* Tombol Aksi: Batal & Keluar */}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutModal(false)}
+                className="bg-white hover:bg-gray-50 text-[#334155] border border-gray-300 px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-xs cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="bg-[#CC2929] hover:bg-[#B32424] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
+              >
+                Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

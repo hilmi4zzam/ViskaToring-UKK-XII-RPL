@@ -25,6 +25,7 @@ interface PendingDudiChange {
 export default function DashboardAdminPage() {
   const [totalSiswa, setTotalSiswa] = useState<number>(0);
   const [totalGuru, setTotalGuru] = useState<number>(0);
+  const [totalDudi, setTotalDudi] = useState<number>(0);
   const [pendingUsers, setPendingUsers] = useState<PendingUserAccount[]>([]);
   const [pendingDudiList, setPendingDudiList] = useState<PendingDudiChange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +57,16 @@ export default function DashboardAdminPage() {
 
       setTotalGuru(gCount || 0);
 
-      // 3. Persetujuan Anggota Baru (status: pending)
+      // 3. Total DUDI (status: approved)
+      const { count: dCount } = await supabase
+        .from('user_accounts')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'dudi')
+        .eq('status', 'approved');
+
+      setTotalDudi(dCount || 0);
+
+      // 4. Persetujuan Anggota Baru (status: pending)
       const { data: pUsers, error: pErr } = await supabase
         .from('user_accounts')
         .select('id, username, password, role, status, created_at')
@@ -250,7 +260,7 @@ export default function DashboardAdminPage() {
 
   return (
     <div className="w-full flex flex-col">
-      {/* 2 Top Statistics Cards */}
+      {/* 3 Top Statistics Cards */}
       <div className="flex items-center gap-7 mb-8">
         {/* Card Total Siswa */}
         <div className="bg-white border border-gray-400 rounded-[22px] py-6 flex-1 flex flex-col items-center justify-center shadow-xs">
@@ -266,6 +276,14 @@ export default function DashboardAdminPage() {
             {loading ? '...' : totalGuru}
           </span>
           <span className="text-[15px] font-normal text-black">Total Guru</span>
+        </div>
+
+        {/* Card Total DUDI */}
+        <div className="bg-white border border-gray-400 rounded-[22px] py-6 flex-1 flex flex-col items-center justify-center shadow-xs">
+          <span className="text-[52px] font-bold text-black leading-none mb-1.5">
+            {loading ? '...' : totalDudi}
+          </span>
+          <span className="text-[15px] font-normal text-black">Total DUDI</span>
         </div>
       </div>
 

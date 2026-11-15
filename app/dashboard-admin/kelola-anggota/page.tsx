@@ -520,8 +520,16 @@ export default function KelolaAnggotaPage() {
               Yakin untuk menghapus akun <strong>{selectedMember.username}</strong> dengan dudi <strong>{selectedMember.companies?.company_name || '-'}</strong>.
             </p>
 
-            {/* Tombol Aksi: Hapus & Batal */}
+            {/* Tombol Aksi: Batal & Hapus */}
             <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                disabled={actionLoading}
+                className="bg-white hover:bg-gray-50 text-[#334155] border border-gray-300 px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
               <button
                 type="button"
                 onClick={handleConfirmDeleteSingle}
@@ -529,14 +537,6 @@ export default function KelolaAnggotaPage() {
                 className="bg-[#CC2929] hover:bg-[#B32424] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 {actionLoading ? 'Menghapus...' : 'Hapus'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                disabled={actionLoading}
-                className="bg-[#000066] hover:bg-[#000044] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
-              >
-                Batal
               </button>
             </div>
           </div>
@@ -569,8 +569,16 @@ export default function KelolaAnggotaPage() {
               Yakin untuk menghapus seluruh data siswa tahun <strong>{currentYear}</strong>? Tindakan ini akan menghapus akun seluruh siswa yang terdaftar di tahun ini beserta riwayat absensinya secara permanen.
             </p>
 
-            {/* Tombol Aksi */}
+            {/* Tombol Aksi: Batal & Hapus */}
             <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                disabled={actionLoading}
+                className="bg-white hover:bg-gray-50 text-[#334155] border border-gray-300 px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
               <button
                 type="button"
                 onClick={handleConfirmDeleteAllYear}
@@ -578,14 +586,6 @@ export default function KelolaAnggotaPage() {
                 className="bg-[#CC2929] hover:bg-[#B32424] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 {actionLoading ? 'Menghapus...' : `Hapus Siswa ${currentYear}`}
-              </button>
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                disabled={actionLoading}
-                className="bg-[#000066] hover:bg-[#000044] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
-              >
-                Batal
               </button>
             </div>
           </div>
@@ -658,12 +658,12 @@ export default function KelolaAnggotaPage() {
                   <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
                     {editRole === 'dudi' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
                   </div>
-                  <span>Mitra DUDI</span>
+                  <span>Dudi</span>
                 </label>
               </div>
             </div>
 
-            {/* Field 3: Dudi (Untuk siswa & mitra dudi) */}
+            {/* Field 3: Dudi (Untuk siswa & dudi) */}
             <div className="mb-8 relative">
               <label className="block text-[14px] font-medium text-black mb-1.5">
                 Dudi :

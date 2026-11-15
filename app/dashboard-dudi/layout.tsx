@@ -46,7 +46,7 @@ export default function DashboardDudiLayout({ children }: { children: React.Reac
 
   const companyTitle = user?.companies?.company_name
     ? `Dudi ${user.companies.company_name}`
-    : 'Mitra DUDI';
+    : 'Dudi';
 
   return (
     <div className="flex min-h-screen bg-white">
