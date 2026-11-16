@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser, clearStoredUser } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, clearStoredUser, hashPassword } from '@/supabase/auth';
 import { Company, User } from '@/supabase/types';
 
 export default function KonfigurasiPage() {
@@ -113,13 +113,15 @@ export default function KonfigurasiPage() {
     setLoading(true);
 
     try {
+      const hashedPassword = await hashPassword(password.trim());
+
       // Siapkan payload update: password baru dan first_login = false
       const updatePayload: {
         password: string;
         first_login: boolean;
         company_id?: number;
       } = {
-        password: password.trim(),
+        password: hashedPassword,
         first_login: false,
       };
 

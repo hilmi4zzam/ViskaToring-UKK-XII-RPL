@@ -1,5 +1,36 @@
 import { supabase } from './client';
 import { Company, User, UserRole, UserAccountStatus } from './types';
+import bcrypt from 'bcryptjs';
+
+/**
+ * Hash kata sandi menggunakan bcrypt (10 salt rounds).
+ */
+export async function hashPassword(plainText: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(plainText, salt);
+}
+
+/**
+ * Verifikasi kata sandi:
+ * - Mendukung format hash bcrypt ($2a$, $2b$, $2y$)
+ * - Mendukung format plain text (kompatibilitas transisi sebelum query SQL dijalankan)
+ */
+export async function verifyPassword(
+  inputPassword: string,
+  storedPassword?: string | null
+): Promise<boolean> {
+  if (!storedPassword) return false;
+
+  if (
+    storedPassword.startsWith('$2a$') ||
+    storedPassword.startsWith('$2b$') ||
+    storedPassword.startsWith('$2y$')
+  ) {
+    return bcrypt.compare(inputPassword, storedPassword);
+  }
+
+  return inputPassword === storedPassword;
+}
 
 const STORAGE_KEY = 'viskatoring_user_session';
 

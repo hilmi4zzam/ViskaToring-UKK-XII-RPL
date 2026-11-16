@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser, isFirstLogin } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, isFirstLogin, hashPassword, verifyPassword } from '@/supabase/auth';
 import { Company, User } from '@/supabase/types';
 
 export default function HomePage() {
@@ -87,7 +87,6 @@ export default function HomePage() {
         .from('user_accounts')
         .select('id, username, password, company_id, role, status, first_login, companies:company_id(*)')
         .eq('username', username.trim())
-        .eq('password', password)
         .maybeSingle();
 
       if (queryError) {
@@ -99,6 +98,26 @@ export default function HomePage() {
         });
         setError('Gagal mengakses data akun dari Supabase (' + queryError.message + '). Pastikan tabel dan policy RLS sudah sesuai.');
         return;
+      }
+
+      if (!user) {
+        setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
+        return;
+      }
+
+      const isPasswordValid = await verifyPassword(password, user.password);
+      if (!isPasswordValid) {
+        setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
+        return;
+      }
+
+      // Auto-upgrade password ke hash jika masih berupa plain text
+      if (user.password && !user.password.startsWith('$2')) {
+        const hashed = await hashPassword(password);
+        await supabase
+          .from('user_accounts')
+          .update({ password: hashed })
+          .eq('id', user.id);
       }
 
       if (user) {
@@ -177,12 +196,15 @@ export default function HomePage() {
     setRegLoading(true);
 
     try {
+      // Hash kata sandi pendaftar baru
+      const hashedPassword = await hashPassword(regPassword);
+
       // Pengajuan akun baru: status = 'pending', role default = 'siswa' (akan ditinjau admin)
       const { data: newUser, error: regErr } = await supabase
         .from('user_accounts')
         .insert({
           username: regUsername.trim(),
-          password: regPassword,
+          password: hashedPassword,
           role: 'siswa',
           status: 'pending',
           first_login: true,

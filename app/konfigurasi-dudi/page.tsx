@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser, clearStoredUser } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, clearStoredUser, hashPassword } from '@/supabase/auth';
 import { User } from '@/supabase/types';
 
 export default function KonfigurasiDudiPage() {
@@ -59,11 +59,13 @@ export default function KonfigurasiDudiPage() {
     setLoading(true);
 
     try {
+      const hashedPassword = await hashPassword(password);
+
       // Update akun DUDI di Supabase: simpan password baru dan ubah first_login = false
       const { data: savedUser, error: updateError } = await supabase
         .from('user_accounts')
         .update({
-          password: password,
+          password: hashedPassword,
           first_login: false,
         })
         .eq('id', currentUser.id)

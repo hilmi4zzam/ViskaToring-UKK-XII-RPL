@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, verifyPassword, hashPassword } from '@/supabase/auth';
 import { Company, User } from '@/supabase/types';
 
 export default function AdminLoginPage() {
@@ -39,13 +39,32 @@ export default function AdminLoginPage() {
         .from('user_accounts')
         .select('id, username, password, company_id, role, status, first_login, companies:company_id(*)')
         .eq('username', username.trim())
-        .eq('password', password)
         .maybeSingle();
 
       if (queryError) {
         console.error('Admin login error:', queryError);
         setError('Gagal mengakses data akun dari Supabase (' + queryError.message + ').');
         return;
+      }
+
+      if (!user) {
+        setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
+        return;
+      }
+
+      const isPasswordValid = await verifyPassword(password, user.password);
+      if (!isPasswordValid) {
+        setError('Nama Akun atau Kata Sandi salah. Silakan periksa kembali.');
+        return;
+      }
+
+      // Auto-upgrade password ke hash jika masih plain text
+      if (user.password && !user.password.startsWith('$2')) {
+        const hashed = await hashPassword(password);
+        await supabase
+          .from('user_accounts')
+          .update({ password: hashed })
+          .eq('id', user.id);
       }
 
       if (user) {

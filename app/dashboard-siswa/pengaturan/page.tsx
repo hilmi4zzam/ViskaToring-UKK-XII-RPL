@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, setStoredUser, clearStoredUser, fetchCurrentUser } from '@/supabase/auth';
+import { getStoredUser, setStoredUser, clearStoredUser, fetchCurrentUser, verifyPassword, hashPassword } from '@/supabase/auth';
 import { Company, User, UserAccountStatus } from '@/supabase/types';
 
 export default function PengaturanPage() {
@@ -139,13 +139,14 @@ export default function PengaturanPage() {
           return;
         }
 
-        if (userCheck?.password && userCheck.password !== oldPassword) {
+        const isOldValid = await verifyPassword(oldPassword, userCheck?.password);
+        if (!isOldValid) {
           setMessage({ text: 'Kata sandi lama salah!', type: 'error' });
           setLoading(false);
           return;
         }
 
-        updatePayload.password = newPassword.trim();
+        updatePayload.password = await hashPassword(newPassword.trim());
       }
 
       // Jika memilih DUDI baru (berbeda dari DUDI aktif saat ini), masukkan ke pending approval
