@@ -252,7 +252,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-white">
       {/* Mobile Navbar: Putih cerah model navbar standar dengan logo & ViskaToring */}
-      <nav className="flex md:hidden items-center gap-3 w-full bg-white border-b border-gray-200 px-6 py-5 shadow-xs sticky top-0 z-30">
+      <nav className="flex md:hidden items-center gap-3 w-full bg-white border-b border-gray-200 px-6 py-4 shadow-xs sticky top-0 z-30">
         <div
           onClick={handleLogoClick}
           className="select-none cursor-default"
