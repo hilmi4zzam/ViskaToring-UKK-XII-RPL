@@ -306,115 +306,117 @@ export default function DashboardBeranda() {
   const todayReport = todayAttendance?.reports && todayAttendance.reports.length > 0 ? todayAttendance.reports[0] : null;
 
   return (
-    <div className="w-full max-w-[940px] mx-auto flex flex-col gap-8">
+    <div className="w-full max-w-[940px] mx-auto flex flex-col gap-5 md:gap-8">
       
-      {/* Top Stats Row */}
-      <div className="flex gap-8">
-        <div className="flex-1 bg-white border border-gray-300 rounded-[24px] p-8 flex flex-col items-center justify-center shadow-sm">
-          <span className="text-[60px] font-medium text-black leading-none mb-2">
+      {/* Top Stats Row (Gambar 1: Bersebelahan rapi di mobile & desktop) */}
+      <div className="flex gap-3.5 md:gap-8">
+        <div className="flex-1 bg-white border border-gray-400 md:border-gray-300 rounded-[20px] md:rounded-[24px] p-4 md:p-8 flex flex-col items-center justify-center shadow-xs md:shadow-sm">
+          <span className="text-[36px] md:text-[60px] font-bold md:font-medium text-black leading-none mb-1.5 md:mb-2">
             {loadingData ? '-' : statsWfo}
           </span>
-          <span className="text-[18px] text-gray-700">Hadir Ke Dudi</span>
+          <span className="text-[13px] md:text-[18px] text-black md:text-gray-700 font-normal text-center">Hadir Ke Dudi</span>
         </div>
-        <div className="flex-1 bg-white border border-gray-300 rounded-[24px] p-8 flex flex-col items-center justify-center shadow-sm">
-          <span className="text-[60px] font-medium text-black leading-none mb-2">
+        <div className="flex-1 bg-white border border-gray-400 md:border-gray-300 rounded-[20px] md:rounded-[24px] p-4 md:p-8 flex flex-col items-center justify-center shadow-xs md:shadow-sm">
+          <span className="text-[36px] md:text-[60px] font-bold md:font-medium text-black leading-none mb-1.5 md:mb-2">
             {loadingData ? '-' : statsWfh}
           </span>
-          <span className="text-[18px] text-gray-700">Hadir WFH</span>
+          <span className="text-[13px] md:text-[18px] text-black md:text-gray-700 font-normal text-center">Hadir WFH</span>
         </div>
       </div>
 
-      {/* Middle Content Row */}
-      <div className="flex gap-8 flex-1 min-h-[380px]">
+      {/* Middle Content Row: Pada mobile Absen Actions berada di atas (order-1), Pratinjau berada di bawah (order-2) */}
+      <div className="flex flex-col md:flex-row gap-5 md:gap-8 flex-1 md:min-h-[380px]">
         
-        {/* Left: Pratinjau Absensi atau Highlight Laporan Absen Pulang */}
-        {isSudahPulang ? (
-          <div className="flex-1 bg-white border border-gray-300 rounded-[24px] p-8 flex flex-col justify-between shadow-sm">
-            <div>
-              {/* Header Highlight */}
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#299946]"></span>
-                  <span className="text-[14px] font-semibold text-gray-800">
-                    Laporan Absensi Pulang
+        {/* Pratinjau Absensi atau Highlight Laporan Absen Pulang (order-2 on mobile, order-1 on desktop) */}
+        <div className="order-2 md:order-1 flex-1 flex flex-col">
+          {isSudahPulang ? (
+            <div className="flex-1 bg-white border border-gray-400 md:border-gray-300 rounded-[24px] p-6 md:p-8 flex flex-col justify-between shadow-xs md:shadow-sm">
+              <div>
+                {/* Header Highlight */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#299946]"></span>
+                    <span className="text-[14px] font-semibold text-gray-800">
+                      Laporan Absensi Pulang
+                    </span>
+                  </div>
+                  <span className="text-[12px] bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-full border border-emerald-200">
+                    {todayAttendance?.status_kehadiran} • {formatTimeOnly(todayAttendance?.jam_pulang)}
                   </span>
                 </div>
-                <span className="text-[12px] bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-full border border-emerald-200">
-                  {todayAttendance?.status_kehadiran} • {formatTimeOnly(todayAttendance?.jam_pulang)}
-                </span>
+
+                {/* Judul Kegiatan */}
+                <h3 className="text-[18px] font-semibold text-black mb-2 line-clamp-1">
+                  {todayReport?.judul_laporan || 'Laporan Harian'}
+                </h3>
+
+                {/* Deskripsi Kegiatan */}
+                <p className="text-[14px] text-gray-600 leading-relaxed mb-4 line-clamp-3">
+                  {todayReport?.deskripsi_laporan || 'Tidak ada deskripsi laporan kegiatan.'}
+                </p>
               </div>
 
-              {/* Judul Kegiatan */}
-              <h3 className="text-[18px] font-semibold text-black mb-2 line-clamp-1">
-                {todayReport?.judul_laporan || 'Laporan Harian'}
-              </h3>
-
-              {/* Deskripsi Kegiatan */}
-              <p className="text-[14px] text-gray-600 leading-relaxed mb-4 line-clamp-3">
-                {todayReport?.deskripsi_laporan || 'Tidak ada deskripsi laporan kegiatan.'}
+              {/* Foto Bukti Kegiatan (jika ada) */}
+              {todayReport?.bukti_laporan ? (
+                <div className="mt-auto pt-2">
+                  <p className="text-[12px] text-gray-500 mb-1.5 font-medium">Foto Bukti Kegiatan :</p>
+                  <div className="relative w-full h-[140px] rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={todayReport.bukti_laporan} 
+                      alt="Bukti Laporan" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-[12px] text-gray-400">
+                  <span>Masuk: {formatTimeOnly(todayAttendance?.jam_masuk)}</span>
+                  <span>Pulang: {formatTimeOnly(todayAttendance?.jam_pulang)}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 bg-[#EDEDED] md:bg-[#F0F0F0] rounded-[24px] flex flex-col items-center justify-center p-8 md:p-10 text-center min-h-[220px] md:min-h-0">
+              <div className={`w-[80px] h-[80px] md:w-[84px] md:h-[84px] rounded-full flex items-center justify-center mb-6 md:mb-8 text-white shadow-md transition-colors ${
+                isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
+              }`}>
+                {isSudahMasuk ? (
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                ) : (
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                )}
+              </div>
+              <p className="text-[16px] md:text-[18px] font-medium text-black leading-snug">
+                {isSudahMasuk ? (
+                  <>
+                    Sudah Absensi Masuk<br/>
+                    <span className="text-[13px] md:text-[14px] text-gray-600 font-normal">
+                      Pukul {formatTimeOnly(todayAttendance?.jam_masuk)} ({todayAttendance?.status_kehadiran})
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Pratinjau Absensi<br/>Pada Hari Ini
+                  </>
+                )}
               </p>
             </div>
+          )}
+        </div>
 
-            {/* Foto Bukti Kegiatan (jika ada) */}
-            {todayReport?.bukti_laporan ? (
-              <div className="mt-auto pt-2">
-                <p className="text-[12px] text-gray-500 mb-1.5 font-medium">Foto Bukti Kegiatan :</p>
-                <div className="relative w-full h-[140px] rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={todayReport.bukti_laporan} 
-                    alt="Bukti Laporan" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-[12px] text-gray-400">
-                <span>Masuk: {formatTimeOnly(todayAttendance?.jam_masuk)}</span>
-                <span>Pulang: {formatTimeOnly(todayAttendance?.jam_pulang)}</span>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex-1 bg-[#F0F0F0] rounded-[24px] flex flex-col items-center justify-center p-10 text-center">
-            <div className={`w-[84px] h-[84px] rounded-full flex items-center justify-center mb-8 text-white shadow-md transition-colors ${
-              isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
-            }`}>
-              {isSudahMasuk ? (
-                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              ) : (
-                <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              )}
-            </div>
-            <p className="text-[18px] font-medium text-black leading-snug">
-              {isSudahMasuk ? (
-                <>
-                  Sudah Absensi Masuk<br/>
-                  <span className="text-[14px] text-gray-600 font-normal">
-                    Pukul {formatTimeOnly(todayAttendance?.jam_masuk)} ({todayAttendance?.status_kehadiran})
-                  </span>
-                </>
-              ) : (
-                <>
-                  Pratinjau Absensi<br/>Pada Hari Ini
-                </>
-              )}
-            </p>
-          </div>
-        )}
-
-        {/* Right: Absen Actions */}
-        <div className="flex-1 bg-white border border-gray-300 rounded-[24px] p-8 flex flex-col gap-7 shadow-sm">
+        {/* Absen Actions (order-1 on mobile, order-2 on desktop) */}
+        <div className="order-1 md:order-2 flex-1 bg-white border border-gray-400 md:border-gray-300 rounded-[24px] p-4 sm:p-6 md:p-8 flex flex-col gap-3.5 md:gap-7 shadow-xs md:shadow-sm">
           
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:gap-4">
             {/* Status Masuk */}
             <button 
-              className={`w-full text-white text-[16px] font-medium py-4 rounded-xl transition-colors ${
+              className={`w-full text-white text-[15px] md:text-[16px] font-medium py-3.5 md:py-4 rounded-xl transition-colors ${
                 isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
               }`}
             >
@@ -426,7 +428,7 @@ export default function DashboardBeranda() {
 
             {/* Status Pulang */}
             <button 
-              className={`w-full text-white text-[16px] font-medium py-4 rounded-xl transition-colors ${
+              className={`w-full text-white text-[15px] md:text-[16px] font-medium py-3.5 md:py-4 rounded-xl transition-colors ${
                 isSudahPulang ? 'bg-[#299946]' : 'bg-[#CC2929]'
               }`}
             >
@@ -437,8 +439,8 @@ export default function DashboardBeranda() {
             </button>
           </div>
 
-          <div className="bg-[#F0F0F0] rounded-[24px] p-8 flex-1 flex flex-col items-center justify-center border border-gray-200">
-            <div className="text-[52px] font-medium text-black tracking-widest mb-5">
+          <div className="bg-[#EDEDED] md:bg-[#F0F0F0] rounded-[22px] md:rounded-[24px] py-8 px-6 md:p-8 min-h-[190px] md:min-h-0 flex-1 flex flex-col items-center justify-center border border-gray-200/60 md:border-gray-200">
+            <div className="text-[48px] sm:text-[50px] md:text-[52px] font-medium text-black tracking-wider md:tracking-widest mb-4 md:mb-5 leading-none">
               {currentTime}
             </div>
             <button 
@@ -451,7 +453,7 @@ export default function DashboardBeranda() {
                   detectLocation();
                 }
               }}
-              className="w-full bg-white text-black text-[16px] font-medium py-4 rounded-xl shadow-sm disabled:cursor-not-allowed"
+              className="w-full max-w-[240px] md:max-w-none bg-white text-black text-[15px] md:text-[16px] font-medium py-3 md:py-4 rounded-xl shadow-xs md:shadow-sm hover:bg-gray-50 transition-colors disabled:cursor-not-allowed cursor-pointer text-center"
             >
               {isSudahMasuk && isSudahPulang ? 'Absensi Lengkap' : 'Absen Sekarang'}
             </button>

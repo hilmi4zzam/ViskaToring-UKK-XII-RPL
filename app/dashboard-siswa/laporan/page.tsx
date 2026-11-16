@@ -96,16 +96,16 @@ export default function LaporanPage() {
   return (
     <div className="w-full flex flex-col gap-6">
       {/* Top Buttons Status */}
-      <div className="flex flex-wrap gap-4 items-center">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center">
         <button 
-          className={`text-white text-[15px] font-medium py-2.5 px-6 rounded-md transition-colors ${
+          className={`w-full md:w-auto text-white text-[15px] font-medium py-2.5 px-6 rounded-md text-center transition-colors ${
             isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
           }`}
         >
           {isSudahMasuk ? `Sudah Absen Masuk (${formatJam(todayAttendance?.jam_masuk)})` : 'Belum Absensi Masuk'}
         </button>
         <button 
-          className={`text-white text-[15px] font-medium py-2.5 px-6 rounded-md transition-colors ${
+          className={`w-full md:w-auto text-white text-[15px] font-medium py-2.5 px-6 rounded-md text-center transition-colors ${
             isSudahPulang ? 'bg-[#299946]' : 'bg-[#CC2929]'
           }`}
         >
@@ -113,7 +113,7 @@ export default function LaporanPage() {
         </button>
         <Link 
           href="/dashboard-siswa"
-          className="bg-[#F0F0F0] text-black text-[15px] font-medium py-2.5 px-6 rounded-md hover:bg-gray-200 transition-colors inline-block"
+          className="w-full md:w-auto bg-[#F0F0F0] text-black text-[15px] font-medium py-2.5 px-6 rounded-md hover:bg-gray-200 transition-colors text-center inline-block"
         >
           Absen Sekarang
         </Link>
