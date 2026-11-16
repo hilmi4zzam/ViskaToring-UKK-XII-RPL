@@ -251,27 +251,41 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-white">
-      {/* Left Side */}
+      {/* Mobile Navbar: Putih cerah model navbar standar dengan logo & ViskaToring */}
+      <nav className="flex md:hidden items-center gap-3 w-full bg-white border-b border-gray-200 px-6 py-5 shadow-xs sticky top-0 z-30">
+        <div
+          onClick={handleLogoClick}
+          className="select-none cursor-default"
+        >
+          <Image src="/smk.svg" alt="SMK Logo" width={32} height={32} priority className="w-[32px] h-auto pointer-events-none" />
+        </div>
+        <h2 className="text-[22px] font-semibold text-black tracking-tight select-none">ViskaToring</h2>
+      </nav>
+
+      {/* Left / Hero Side */}
       <div 
-        className="flex-[1.2] relative flex flex-col justify-end p-[48px] text-white"
+        className="w-full md:flex-[1.2] relative flex flex-col justify-end p-6 md:p-[48px] text-white min-h-[300px] md:min-h-screen"
         style={{
-          background: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%), url('/halaman depan.webp') center/cover no-repeat"
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.85) 100%), url('/halaman depan.webp') center/cover no-repeat"
         }}
       >
-        <h1 className="text-[42px] md:text-[56px] font-semibold leading-[1.1] mb-3">
-          Portal Absensi<br />Magang
-        </h1>
-        <p className="text-[16px] md:text-[20px] font-light max-w-[90%]">
-          Situs monitoring online siswa Praktik Kerja Lapangan resmi SMK Negeri 6 Surakarta
-        </p>
+        {/* Hero Title & Subtitle */}
+        <div>
+          <h1 className="text-[38px] sm:text-[44px] md:text-[56px] font-bold md:font-semibold leading-[1.12] mb-2.5 md:mb-3">
+            Portal Absensi<br />Magang
+          </h1>
+          <p className="text-[14px] sm:text-[16px] md:text-[20px] font-normal md:font-light max-w-[95%] md:max-w-[90%] leading-relaxed text-white/95">
+            Situs monitoring online siswa Praktik Kerja Lapangan resmi SMK Negeri 6 Surakarta
+          </p>
+        </div>
       </div>
 
-      {/* Right Side */}
-      <div className="flex-1 flex justify-center items-center p-6 md:p-10">
+      {/* Right / Form Side */}
+      <div className="w-full md:flex-1 flex justify-center items-start md:items-center p-6 md:p-10">
         <div className="w-full max-w-[420px]">
           
-          {/* Header Logo */}
-          <div className="flex items-center gap-3 mb-8">
+          {/* Header Logo (Desktop only) */}
+          <div className="hidden md:flex items-center gap-3 mb-8">
             <div
               onClick={handleLogoClick}
               className="select-none cursor-default"
@@ -281,30 +295,31 @@ export default function HomePage() {
             <h2 className="text-[28px] font-semibold text-black select-none">ViskaToring</h2>
           </div>
 
-          <hr className="border-gray-300 mb-8" />
+          {/* Top Divider */}
+          <hr className="border-gray-300 mb-6 md:mb-8" />
 
           {/* Form Login */}
           <form onSubmit={handleLogin}>
-            <div className="mb-5">
-              <label className="block text-[16px] text-black mb-2">Nama Akun :</label>
+            <div className="mb-4 md:mb-5">
+              <label className="block text-[15px] md:text-[16px] font-normal text-black mb-2">Nama Akun :</label>
               <input 
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Masukkan nama akun..."
-                className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+                className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 text-[15px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all placeholder:text-transparent md:placeholder:text-gray-400"
               />
             </div>
 
-            <div className="mb-8">
-              <label className="block text-[16px] text-black mb-2">Kata Sandi :</label>
+            <div className="mb-6 md:mb-8">
+              <label className="block text-[15px] md:text-[16px] font-normal text-black mb-2">Kata Sandi :</label>
               <div className="relative flex items-center">
                 <input 
                   type={showPassword ? "text" : "password"} 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Masukkan kata sandi..."
-                  className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 pr-12 text-[14px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all"
+                  className="w-full bg-[#EDEDED] rounded-xl px-4 py-3 pr-12 text-[15px] text-black outline-none focus:ring-2 focus:ring-[#000066]/20 transition-all placeholder:text-transparent md:placeholder:text-gray-400"
                 />
                 <button 
                   type="button"
@@ -312,32 +327,33 @@ export default function HomePage() {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" />
                     </svg>
                   )}
                 </button>
               </div>
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl p-3 mt-3">
+                <div className="bg-red-50 border border-red-200 text-red-600 text-[14px] rounded-xl p-3 mt-3">
                   {error}
                 </div>
               )}
             </div>
 
-            <hr className="border-gray-300 mb-8" />
+            {/* Divider between password & buttons */}
+            <hr className="border-gray-300 mb-6 md:mb-8" />
 
             {/* Buttons */}
-            <div className="flex flex-col gap-3 mb-8">
+            <div className="flex flex-col gap-3.5 mb-6 md:mb-8">
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#000066] text-white rounded-xl py-3 text-[16px] font-medium hover:bg-[#000044] disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-[#000066] text-white rounded-xl py-3.5 text-[15px] md:text-[16px] font-medium hover:bg-[#000044] disabled:bg-gray-400 transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -351,7 +367,7 @@ export default function HomePage() {
               <button 
                 type="button"
                 onClick={() => setIsRegisterOpen(true)}
-                className="w-full bg-[#EFEF5B] text-black rounded-xl py-3 text-[16px] font-medium hover:bg-[#e0e045] transition-colors"
+                className="w-full bg-[#EFEF5B] text-black rounded-xl py-3.5 text-[15px] md:text-[16px] font-medium hover:bg-[#e0e045] transition-colors"
               >
                 Pengajuan Akun
               </button>
@@ -359,7 +375,7 @@ export default function HomePage() {
           </form>
           
           {/* Footer Text */}
-          <p className="text-[11px] text-gray-500 leading-relaxed text-center px-2">
+          <p className="text-[12px] sm:text-[13px] text-gray-600 leading-relaxed text-center px-2 max-w-[340px] mx-auto pb-4 md:pb-0">
             Jadikan situs web ViskaToring sebagai cerminan integritas kamu selama PKL. Absensi menjadi salah satu yang menentukan nilai akhir kamu
           </p>
           
