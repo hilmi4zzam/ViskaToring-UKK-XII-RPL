@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/supabase/client';
 import { NewsItem } from '@/supabase/types';
 
@@ -19,48 +19,66 @@ export default function BeritaPembimbingPage() {
     return `${day}/${month}/${year}`;
   };
 
-  useEffect(() => {
-    const fetchBerita = async () => {
-      try {
-        // GURU HANYA MENGAMBIL BERITA DENGAN KATEGORI 'guru'
-        const { data, error } = await supabase
-          .from('news')
-          .select('*')
-          .eq('kategori', 'guru')
-          .order('created_at', { ascending: false });
+  const loadData = useCallback(async () => {
+    try {
+      // GURU MENGAMBIL BERITA DENGAN KATEGORI 'guru'
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .eq('kategori', 'guru')
+        .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
-          setNewsList(data as NewsItem[]);
-          return;
-        }
-
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          try {
-            const all = JSON.parse(saved) as NewsItem[];
-            setNewsList(all.filter((b) => b.kategori === 'guru'));
-            return;
-          } catch {
-            // ignore
-          }
-        }
-      } catch {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          try {
-            const all = JSON.parse(saved) as NewsItem[];
-            setNewsList(all.filter((b) => b.kategori === 'guru'));
-          } catch {
-            // ignore
-          }
-        }
-      } finally {
-        setLoading(false);
+      if (!error && data && data.length > 0) {
+        setNewsList(data as NewsItem[]);
+        return;
       }
-    };
 
-    void fetchBerita();
+      // Fallback LocalStorage jika offline/tabel belum ada
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const all = JSON.parse(saved) as NewsItem[];
+          const filtered = all.filter((b) => b.kategori === 'guru');
+          if (filtered.length > 0) {
+            setNewsList(filtered);
+            return;
+          }
+        } catch {
+          // ignore error
+        }
+      }
+
+      // Data Default Sekolah untuk Guru
+      setNewsList([
+        {
+          id: 1,
+          title: 'Anak PKL wajib menaati aturan DUDI.',
+          content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
+          kategori: 'guru',
+          company_id: null,
+          created_at: '2026-09-14T08:00:00.000Z',
+        },
+      ]);
+    } catch {
+      // Fallback aman
+      setNewsList([
+        {
+          id: 1,
+          title: 'Anak PKL wajib menaati aturan DUDI.',
+          content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
+          kategori: 'guru',
+          company_id: null,
+          created_at: '2026-09-14T08:00:00.000Z',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -70,38 +88,43 @@ export default function BeritaPembimbingPage() {
     );
   }
 
-  if (newsList.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center w-full h-full min-h-[400px]">
-        <p className="text-[16px] text-black font-medium">
-          Tidak ada berita dari sekolah untuk guru pembimbing
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full flex flex-col gap-4 max-w-[800px] mx-auto py-2">
-      <h2 className="text-[20px] font-semibold text-black mb-2">Berita & Pengumuman Pembimbing (Sekolah)</h2>
-      <div className="flex flex-col gap-4">
-        {newsList.map((item) => (
-          <div
-            key={item.id}
-            className="w-full bg-[#EDEDED] rounded-[22px] p-5 sm:p-6 shadow-xs flex flex-col gap-2 border border-gray-200"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <h3 className="text-[16px] font-semibold text-black leading-snug">
-                {item.title}
-              </h3>
-              <span className="text-[13px] text-gray-600 font-normal shrink-0">
-                {formatTanggal(item.created_at)}
-              </span>
+    <div className="w-full flex flex-col gap-6 pb-8">
+      {/* ======================================================== */}
+      {/* CONTAINER: Berita dari sekolah                          */}
+      {/* ======================================================== */}
+      <div className="w-full bg-white border border-gray-400 rounded-[24px] p-6 shadow-xs flex flex-col h-[280px]">
+        <h3 className="text-[17px] font-medium text-black">
+          Berita dari sekolah :
+        </h3>
+        <hr className="border-t border-gray-300 mt-3 mb-4 w-full" />
+
+        <div className="flex-1 overflow-y-auto pr-3 flex flex-col gap-3.5 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#000066] [&::-webkit-scrollbar-thumb]:rounded-full">
+          {newsList.length === 0 ? (
+            <div className="py-12 text-center text-gray-400 text-[14px]">
+              Tidak ada berita dari sekolah.
             </div>
-            <p className="text-[14px] text-gray-700 leading-relaxed whitespace-pre-wrap">
-              {item.content}
-            </p>
-          </div>
-        ))}
+          ) : (
+            newsList.map((item) => (
+              <div
+                key={item.id}
+                className="w-full bg-[#EDEDED] rounded-[22px] p-5 shadow-xs flex items-start justify-between gap-4"
+              >
+                <div className="flex-1 flex flex-col gap-1 min-w-0 pr-2">
+                  <h4 className="text-[16px] font-semibold text-black leading-snug">
+                    {item.title}
+                  </h4>
+                  <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-wrap line-clamp-2">
+                    {item.content}
+                  </p>
+                </div>
+                <span className="text-[13px] text-black font-normal shrink-0">
+                  {formatTanggal(item.created_at)}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
