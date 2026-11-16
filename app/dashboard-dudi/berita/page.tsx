@@ -321,17 +321,17 @@ export default function KelolaBeritaDudiPage() {
             </h3>
 
             {/* Konfirmasi Teks */}
-            <p className="text-[14px] text-gray-700 text-center leading-relaxed px-4 mb-6">
+            <p className="text-[14px] text-black text-left leading-relaxed mb-8">
               Yakin untuk menghapus pengumuman <strong className="text-black">&quot;{selectedNews.title}&quot;</strong>?
             </p>
 
-            {/* Tombol Aksi */}
-            <div className="flex items-center justify-center gap-4">
+            {/* Tombol Aksi: Batal di kiri & Hapus mentok kanan */}
+            <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={handleCloseModal}
                 disabled={actionLoading}
-                className="w-[120px] py-2.5 rounded-[18px] text-[14px] font-medium text-[#334155] bg-white hover:bg-gray-50 border border-gray-300 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                className="bg-white hover:bg-gray-50 text-[#334155] border border-gray-300 px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors cursor-pointer shadow-xs disabled:opacity-50"
               >
                 Batal
               </button>
@@ -339,7 +339,7 @@ export default function KelolaBeritaDudiPage() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={actionLoading}
-                className="w-[120px] py-2.5 rounded-[18px] text-[14px] font-medium text-white bg-[#CC2929] hover:bg-[#B32424] transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                className="bg-[#CC2929] hover:bg-[#B32424] text-white px-7 py-2.5 rounded-xl text-[14px] font-medium transition-colors cursor-pointer shadow-sm disabled:opacity-50"
               >
                 {actionLoading ? 'Menghapus...' : 'Hapus'}
               </button>

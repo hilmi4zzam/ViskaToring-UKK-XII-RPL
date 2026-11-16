@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/supabase/client';
 import { NewsItem } from '@/supabase/types';
 
@@ -19,66 +19,66 @@ export default function BeritaPembimbingPage() {
     return `${day}/${month}/${year}`;
   };
 
-  const loadData = useCallback(async () => {
-    try {
-      // GURU MENGAMBIL BERITA DENGAN KATEGORI 'guru'
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .eq('kategori', 'guru')
-        .order('created_at', { ascending: false });
-
-      if (!error && data && data.length > 0) {
-        setNewsList(data as NewsItem[]);
-        return;
-      }
-
-      // Fallback LocalStorage jika offline/tabel belum ada
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const all = JSON.parse(saved) as NewsItem[];
-          const filtered = all.filter((b) => b.kategori === 'guru');
-          if (filtered.length > 0) {
-            setNewsList(filtered);
-            return;
-          }
-        } catch {
-          // ignore error
-        }
-      }
-
-      // Data Default Sekolah untuk Guru
-      setNewsList([
-        {
-          id: 1,
-          title: 'Anak PKL wajib menaati aturan DUDI.',
-          content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-          kategori: 'guru',
-          company_id: null,
-          created_at: '2026-09-14T08:00:00.000Z',
-        },
-      ]);
-    } catch {
-      // Fallback aman
-      setNewsList([
-        {
-          id: 1,
-          title: 'Anak PKL wajib menaati aturan DUDI.',
-          content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-          kategori: 'guru',
-          company_id: null,
-          created_at: '2026-09-14T08:00:00.000Z',
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    const fetchBerita = async () => {
+      try {
+        // GURU MENGAMBIL BERITA DENGAN KATEGORI 'guru'
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .eq('kategori', 'guru')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          setNewsList(data as NewsItem[]);
+          return;
+        }
+
+        // Fallback LocalStorage jika offline/tabel belum ada
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            const all = JSON.parse(saved) as NewsItem[];
+            const filtered = all.filter((b) => b.kategori === 'guru');
+            if (filtered.length > 0) {
+              setNewsList(filtered);
+              return;
+            }
+          } catch {
+            // ignore error
+          }
+        }
+
+        // Data Default Sekolah untuk Guru
+        setNewsList([
+          {
+            id: 1,
+            title: 'Anak PKL wajib menaati aturan DUDI.',
+            content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
+            kategori: 'guru',
+            company_id: null,
+            created_at: '2026-09-14T08:00:00.000Z',
+          },
+        ]);
+      } catch {
+        // Fallback aman
+        setNewsList([
+          {
+            id: 1,
+            title: 'Anak PKL wajib menaati aturan DUDI.',
+            content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
+            kategori: 'guru',
+            company_id: null,
+            created_at: '2026-09-14T08:00:00.000Z',
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchBerita();
+  }, []);
 
   if (loading) {
     return (
