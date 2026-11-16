@@ -154,23 +154,23 @@ export default function DashboardDudiPage() {
       {/* ======================================================== */}
       {/* 1. KARTU STATISTIK ATAS (2 Cards)                       */}
       {/* ======================================================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 w-full">
+      <div className="grid grid-cols-2 gap-3.5 sm:gap-7 w-full">
         {/* Card 1: Jumlah Siswa Magang */}
-        <div className="bg-white border border-gray-400 rounded-[20px] py-6 px-4 flex flex-col items-center justify-center text-center shadow-xs min-h-[145px]">
-          <span className="text-[48px] font-bold text-black leading-none mb-2.5">
+        <div className="bg-white border border-gray-400 rounded-[20px] py-4 sm:py-6 px-2 sm:px-4 flex flex-col items-center justify-center text-center shadow-xs min-h-[110px] sm:min-h-[145px]">
+          <span className="text-[36px] sm:text-[48px] font-bold text-black leading-none mb-1.5 sm:mb-2.5">
             {loading ? '-' : totalSiswaMagang}
           </span>
-          <span className="text-[16px] text-black font-medium">
+          <span className="text-[13px] sm:text-[16px] text-black font-medium">
             Jumlah Siswa Magang
           </span>
         </div>
 
         {/* Card 2: Belum Absensi */}
-        <div className="bg-white border border-gray-400 rounded-[20px] py-6 px-4 flex flex-col items-center justify-center text-center shadow-xs min-h-[145px]">
-          <span className="text-[48px] font-bold text-black leading-none mb-2.5">
+        <div className="bg-white border border-gray-400 rounded-[20px] py-4 sm:py-6 px-2 sm:px-4 flex flex-col items-center justify-center text-center shadow-xs min-h-[110px] sm:min-h-[145px]">
+          <span className="text-[36px] sm:text-[48px] font-bold text-black leading-none mb-1.5 sm:mb-2.5">
             {loading ? '-' : belumAbsensiCount}
           </span>
-          <span className="text-[16px] text-black font-medium">
+          <span className="text-[13px] sm:text-[16px] text-black font-medium">
             Belum Absensi
           </span>
         </div>

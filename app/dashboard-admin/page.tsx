@@ -261,29 +261,29 @@ export default function DashboardAdminPage() {
   return (
     <div className="w-full flex flex-col">
       {/* 3 Top Statistics Cards */}
-      <div className="flex items-center gap-7 mb-8">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6 w-full mb-8">
         {/* Card Total Siswa */}
-        <div className="bg-white border border-gray-400 rounded-[22px] py-6 flex-1 flex flex-col items-center justify-center shadow-xs">
-          <span className="text-[52px] font-bold text-black leading-none mb-1.5">
+        <div className="bg-white border border-gray-400 rounded-2xl py-3.5 sm:py-5 px-1.5 sm:px-3 flex flex-col items-center justify-center shadow-xs">
+          <span className="text-[36px] sm:text-[44px] font-bold text-black leading-none mb-1">
             {loading ? '...' : totalSiswa}
           </span>
-          <span className="text-[15px] font-normal text-black">Total Siswa</span>
+          <span className="text-[12px] sm:text-[14px] text-black font-normal text-center whitespace-nowrap">Total Siswa</span>
         </div>
 
         {/* Card Total Guru */}
-        <div className="bg-white border border-gray-400 rounded-[22px] py-6 flex-1 flex flex-col items-center justify-center shadow-xs">
-          <span className="text-[52px] font-bold text-black leading-none mb-1.5">
+        <div className="bg-white border border-gray-400 rounded-2xl py-3.5 sm:py-5 px-1.5 sm:px-3 flex flex-col items-center justify-center shadow-xs">
+          <span className="text-[36px] sm:text-[44px] font-bold text-black leading-none mb-1">
             {loading ? '...' : totalGuru}
           </span>
-          <span className="text-[15px] font-normal text-black">Total Guru</span>
+          <span className="text-[12px] sm:text-[14px] text-black font-normal text-center whitespace-nowrap">Total Guru</span>
         </div>
 
         {/* Card Total DUDI */}
-        <div className="bg-white border border-gray-400 rounded-[22px] py-6 flex-1 flex flex-col items-center justify-center shadow-xs">
-          <span className="text-[52px] font-bold text-black leading-none mb-1.5">
+        <div className="bg-white border border-gray-400 rounded-2xl py-3.5 sm:py-5 px-1.5 sm:px-3 flex flex-col items-center justify-center shadow-xs">
+          <span className="text-[36px] sm:text-[44px] font-bold text-black leading-none mb-1">
             {loading ? '...' : totalDudi}
           </span>
-          <span className="text-[15px] font-normal text-black">Total DUDI</span>
+          <span className="text-[12px] sm:text-[14px] text-black font-normal text-center whitespace-nowrap">Total Dudi</span>
         </div>
       </div>
 
@@ -291,17 +291,18 @@ export default function DashboardAdminPage() {
       <div className="mb-2">
         <h3 className="text-[16px] font-medium text-black mb-3">Persetujuan Anggota Baru :</h3>
         <div className="w-full bg-white border border-gray-400 rounded-[22px] overflow-hidden shadow-xs">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#EDEDED] border-b border-gray-300">
-                <th className="w-[60%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                  Nama Pendaftar
-                </th>
-                <th className="w-[40%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                  Persetujuan
-                </th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[380px]">
+              <thead>
+                <tr className="bg-[#EDEDED] border-b border-gray-300">
+                  <th className="w-[60%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                    Nama Pendaftar
+                  </th>
+                  <th className="w-[40%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                    Persetujuan
+                  </th>
+                </tr>
+              </thead>
             <tbody>
               {loading ? (
                 <tr>
@@ -355,6 +356,7 @@ export default function DashboardAdminPage() {
           </table>
         </div>
       </div>
+      </div>
 
       {/* Horizontal Divider */}
       <hr className="border-t border-gray-300 my-8 w-full" />
@@ -363,23 +365,24 @@ export default function DashboardAdminPage() {
       <div className="mb-6">
         <h3 className="text-[16px] font-medium text-black mb-3">Persetujuan perubahan DUDI :</h3>
         <div className="w-full bg-white border border-gray-400 rounded-[22px] overflow-hidden shadow-xs">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#EDEDED] border-b border-gray-300">
-                <th className="w-[30%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                  Nama Pendaftar
-                </th>
-                <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                  Dudi Lama
-                </th>
-                <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                  Dudi Baru
-                </th>
-                <th className="w-[20%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                  Persetujuan
-                </th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[500px]">
+              <thead>
+                <tr className="bg-[#EDEDED] border-b border-gray-300">
+                  <th className="w-[30%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                    Nama Pendaftar
+                  </th>
+                  <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                    Dudi Lama
+                  </th>
+                  <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                    Dudi Baru
+                  </th>
+                  <th className="w-[20%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                    Persetujuan
+                  </th>
+                </tr>
+              </thead>
             <tbody>
               {loading ? (
                 <tr>
@@ -438,6 +441,7 @@ export default function DashboardAdminPage() {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
 
       {/* ======================================================== */}

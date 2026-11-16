@@ -125,12 +125,14 @@ export default function PengaturanDudiPage() {
       {/* Nama Akun */}
       <div className="flex flex-col gap-2">
         <label className="text-[15px] font-medium text-black">Nama Akun :</label>
-        <div className="relative">
+        <div className="relative cursor-not-allowed">
           <input 
             type="text" 
             value={currentUser?.username || "Memuat akun..."} 
+            disabled
+            tabIndex={-1}
             readOnly 
-            className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none cursor-not-allowed font-medium"
+            className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none cursor-not-allowed font-medium pointer-events-none"
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -209,13 +211,14 @@ export default function PengaturanDudiPage() {
       {/* Asal DUDI (Disabled with red not-allowed cursor) */}
       <div className="flex flex-col gap-2 mt-1">
         <label className="text-[15px] font-medium text-black">Asal DUDI :</label>
-        <div className="relative">
+        <div className="relative cursor-not-allowed">
           <input 
             type="text" 
             value={companyName}
             disabled
-            readOnly
-            className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none font-medium cursor-not-allowed opacity-90"
+            tabIndex={-1}
+            readOnly 
+            className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none font-medium cursor-not-allowed opacity-90 pointer-events-none"
             style={{ cursor: 'not-allowed' }}
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
@@ -276,7 +279,7 @@ export default function PengaturanDudiPage() {
             </div>
 
             {/* Konten */}
-            <p className="text-[14px] text-black leading-relaxed mb-8 text-center sm:text-left">
+            <p className="text-[14px] text-black leading-relaxed mb-8 text-left">
               Yakin untuk keluar dari akun ini?
             </p>
 

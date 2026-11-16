@@ -94,9 +94,9 @@ export default function LaporanPage() {
   const isSudahPulang = Boolean(todayAttendance?.jam_pulang);
 
   return (
-    <div className="w-full flex flex-col gap-6">
+    <div className="w-full flex flex-col gap-6 print:gap-2">
       {/* Top Buttons Status */}
-      <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center print:hidden">
         <button 
           className={`w-full md:w-auto text-white text-[15px] font-medium py-2.5 px-6 rounded-md text-center transition-colors ${
             isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
@@ -119,10 +119,10 @@ export default function LaporanPage() {
         </Link>
       </div>
 
-      <hr className="border-t border-gray-400 my-2" />
+      <hr className="border-t border-gray-400 my-2 print:hidden" />
 
       {/* Filter Section */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 print:hidden">
         <label className="text-[15px] font-medium text-black">Filterisasi :</label>
         <div className="flex justify-between items-center">
           <div className="flex gap-4">
@@ -163,7 +163,7 @@ export default function LaporanPage() {
           
           <button 
             onClick={() => window.print()}
-            className="text-black hover:text-gray-700 transition-colors p-1" 
+            className="text-black hover:text-gray-700 transition-colors p-1 cursor-pointer" 
             title="Cetak Laporan"
           >
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -173,49 +173,58 @@ export default function LaporanPage() {
         </div>
       </div>
 
+      {/* Header Dokumen Khusus Print */}
+      <div className="hidden print:block text-center mb-2">
+        <h1 className="text-xl font-bold uppercase tracking-wide text-black">Rekapitulasi Absensi Siswa</h1>
+        <p className="text-[13px] text-gray-700 mt-1">Periode: {selectedMonth} {selectedYear}</p>
+      </div>
+
       {/* Table Section */}
-      <div className="w-full bg-white mt-4 border border-gray-400 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-center">
+      <div className="w-full bg-white mt-4 print:mt-0 border border-gray-400 print:border-black rounded-2xl print:rounded-none overflow-hidden shadow-sm print:shadow-none">
+        <div className="overflow-x-auto print:overflow-visible">
+          <table className="w-full border-collapse text-center print:border print:border-black">
             <thead>
-              <tr className="bg-[#EBEBEB] border-b border-gray-400">
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Tanggal</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[15%]">Status</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Waktu Masuk</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Waktu Pulang</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[25%]">Laporan</th>
+              <tr className="bg-[#EBEBEB] border-b border-gray-400 print:border-black print:bg-gray-100">
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%] print:border print:border-black">Tanggal</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[15%] print:border print:border-black">Status</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%] print:border print:border-black">Waktu Masuk</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%] print:border print:border-black">Waktu Pulang</th>
+                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[25%] print:border print:border-black">
+                  <span className="print:hidden">Laporan</span>
+                  <span className="hidden print:inline">TTD Instruktur</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px]">
+                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px] print:border print:border-black">
                     Memuat data riwayat absensi dari Supabase...
                   </td>
                 </tr>
               ) : filteredAttendances.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px]">
+                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px] print:border print:border-black">
                     Tidak ada data absensi pada {selectedMonth} {selectedYear}.
                   </td>
                 </tr>
               ) : (
                 filteredAttendances.map((att) => (
-                  <tr key={att.id} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                  <tr key={att.id} className="hover:bg-gray-50/60 transition-colors print:hover:bg-transparent">
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
                       {formatTanggal(att.tanggal_absen)}
                     </td>
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
                       {att.status_kehadiran || '-'}
                     </td>
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
                       {formatJam(att.jam_masuk)}
                     </td>
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
                       {formatJam(att.jam_pulang)}
                     </td>
-                    <td className="py-2.5 px-4">
-                      <div className="flex justify-center items-center">
+                    <td className="py-2.5 px-4 print:border print:border-black print:p-0">
+                      <div className="flex justify-center items-center print:hidden">
                         <button 
                           onClick={() => {
                             setSelectedAttendance(att);
@@ -225,11 +234,13 @@ export default function LaporanPage() {
                             att.jam_masuk 
                               ? 'bg-[#000066] hover:bg-[#000044]' 
                               : 'bg-[#CC2929] hover:bg-[#B32424]'
-                          } text-white px-5 py-2 rounded-lg font-normal text-[14px] transition-colors shadow-xs`}
+                          } text-white px-5 py-2 rounded-lg font-normal text-[14px] transition-colors shadow-xs cursor-pointer`}
                         >
                           {att.jam_masuk ? 'Lihat Laporan' : 'Belum Absen'}
                         </button>
                       </div>
+                      {/* Kolom TTD Instruktur saat dicetak */}
+                      <div className="hidden print:block w-full h-12" />
                     </td>
                   </tr>
                 ))
@@ -241,7 +252,7 @@ export default function LaporanPage() {
 
       {/* Modal Detail Laporan */}
       {modalOpen && selectedAttendance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4 print:hidden">
           <div className="bg-[#EDEDED] w-full max-w-[440px] rounded-[28px] p-6 sm:p-7 relative shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#000066]/30 [&::-webkit-scrollbar-thumb]:rounded-full border border-gray-300">
             {/* Tombol Kembali (Panah Kiri) */}
             <button 

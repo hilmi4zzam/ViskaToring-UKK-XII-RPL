@@ -29,6 +29,8 @@ export default function KelolaAnggotaPage() {
   const [filterRole, setFilterRole] = useState<'Semua' | 'Siswa' | 'Guru' | 'Dudi'>('Semua');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const [showFilterDropdownMobile, setShowFilterDropdownMobile] = useState(false);
+  const filterDropdownMobileRef = useRef<HTMLDivElement>(null);
 
   // Modal States
   const [modalType, setModalType] = useState<'delete_single' | 'delete_all' | 'edit_member' | 'add_member' | null>(null);
@@ -55,6 +57,9 @@ export default function KelolaAnggotaPage() {
     function handleClickOutside(event: MouseEvent) {
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
         setShowFilterDropdown(false);
+      }
+      if (filterDropdownMobileRef.current && !filterDropdownMobileRef.current.contains(event.target as Node)) {
+        setShowFilterDropdownMobile(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -393,8 +398,103 @@ export default function KelolaAnggotaPage() {
 
   return (
     <div className="w-full flex flex-col">
-      {/* Top Bar: Filterisasi Anggota (Kiri) & Total Cards (Kanan) */}
-      <div className="flex items-center justify-between gap-6 mb-7">
+      {/* Top Bar Mobile (Sesuai Mockup Gambar: 2 Cards di Atas, Filter + Tombol Kuning di Bawah) */}
+      <div className="md:hidden flex flex-col gap-4 mb-6">
+        {/* Baris 1: Total Siswa, Total Guru & Total Dudi Bersebelahan (3 Cards) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
+          {/* Card Total Siswa */}
+          <div className="bg-white border border-gray-400 rounded-2xl py-3.5 sm:py-5 px-1.5 sm:px-3 flex flex-col items-center justify-center shadow-xs">
+            <span className="text-[36px] sm:text-[44px] font-bold text-black leading-none mb-1">
+              {loading ? '...' : totalSiswa}
+            </span>
+            <span className="text-[12px] sm:text-[14px] text-black font-normal text-center whitespace-nowrap">Total Siswa</span>
+          </div>
+
+          {/* Card Total Guru */}
+          <div className="bg-white border border-gray-400 rounded-2xl py-3.5 sm:py-5 px-1.5 sm:px-3 flex flex-col items-center justify-center shadow-xs">
+            <span className="text-[36px] sm:text-[44px] font-bold text-black leading-none mb-1">
+              {loading ? '...' : totalGuru}
+            </span>
+            <span className="text-[12px] sm:text-[14px] text-black font-normal text-center whitespace-nowrap">Total Guru</span>
+          </div>
+
+          {/* Card Total Dudi */}
+          <div className="bg-white border border-gray-400 rounded-2xl py-3.5 sm:py-5 px-1.5 sm:px-3 flex flex-col items-center justify-center shadow-xs">
+            <span className="text-[36px] sm:text-[44px] font-bold text-black leading-none mb-1">
+              {loading ? '...' : totalDudi}
+            </span>
+            <span className="text-[12px] sm:text-[14px] text-black font-normal text-center whitespace-nowrap">Total Dudi</span>
+          </div>
+        </div>
+
+        {/* Baris 2: Filterisasi Anggota (Kiri) & Tombol Tambah Anggota Kotak Kuning (Kanan) */}
+        <div className="flex items-end justify-between gap-4 w-full">
+          <div className="flex flex-col">
+            <label className="text-[14px] font-medium text-black mb-1.5">Filterisasi Anggota :</label>
+            <div className="relative" ref={filterDropdownMobileRef}>
+              <button
+                type="button"
+                onClick={() => setShowFilterDropdownMobile(!showFilterDropdownMobile)}
+                className="bg-[#EDEDED] border border-gray-300 rounded-xl px-4 py-2 flex items-center gap-3 text-[14px] font-normal text-black cursor-pointer shadow-xs"
+              >
+                <span>{filterRole}</span>
+                <svg 
+                  width="14" 
+                  height="14" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className={`transition-transform duration-200 ${showFilterDropdownMobile ? 'rotate-180' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+
+              {/* Dropdown Menu Mobile */}
+              {showFilterDropdownMobile && (
+                <div className="absolute top-full left-0 mt-1.5 w-36 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-20">
+                  {(['Semua', 'Siswa', 'Guru', 'Dudi'] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        setFilterRole(r);
+                        setShowFilterDropdownMobile(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-[14px] transition-colors cursor-pointer ${
+                        filterRole === r 
+                          ? 'bg-[#000066]/10 text-[#000066] font-semibold' 
+                          : 'text-black hover:bg-gray-100'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tombol Tambah Anggota: Kotak Kuning dengan icon + */}
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="w-[56px] h-[56px] bg-[#FFE600] hover:bg-[#FACC15] rounded-2xl flex items-center justify-center text-black shadow-xs transition-colors cursor-pointer shrink-0"
+            aria-label="Tambah Anggota"
+          >
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Top Bar Desktop: Filterisasi Anggota (Kiri) & Total Cards (Kanan) */}
+      <div className="hidden md:flex items-center justify-between gap-6 mb-7">
         {/* Kiri: Filterisasi Anggota */}
         <div className="flex flex-col">
           <label className="text-[16px] font-medium text-black mb-2">Filterisasi Anggota :</label>
@@ -445,7 +545,7 @@ export default function KelolaAnggotaPage() {
           </div>
         </div>
 
-        {/* Kanan: 3 Total Cards */}
+        {/* Kanan: 3 Total Cards + Card Tambah Anggota */}
         <div className="flex items-center gap-4">
           {/* Card Total Siswa */}
           <div className="bg-white border border-gray-400 rounded-[20px] py-3.5 px-6 min-w-[130px] flex flex-col items-center justify-center shadow-xs">
@@ -493,79 +593,81 @@ export default function KelolaAnggotaPage() {
 
       {/* Tabel Kelola Anggota */}
       <div className="w-full bg-white border border-gray-400 rounded-[22px] overflow-hidden shadow-xs mb-8">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-[#EDEDED] border-b border-gray-300">
-              <th className="w-[30%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                Nama
-              </th>
-              <th className="w-[20%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                Peran
-              </th>
-              <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                Dudi
-              </th>
-              <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                Kelola Anggota
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={4} className="py-14 text-center text-gray-500 text-[14px]">
-                  Memuat data anggota...
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[620px]">
+            <thead>
+              <tr className="bg-[#EDEDED] border-b border-gray-300">
+                <th className="w-[30%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                  Nama
+                </th>
+                <th className="w-[20%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                  Peran
+                </th>
+                <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                  Dudi
+                </th>
+                <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4 whitespace-nowrap">
+                  Kelola Anggota
+                </th>
               </tr>
-            ) : filteredMembers.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="py-14 text-center text-black text-[14px] font-normal">
-                  Tidak ada anggota yang ditemukan
-                </td>
-              </tr>
-            ) : (
-              filteredMembers.map((item) => (
-                <tr key={item.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/60 transition-colors">
-                  <td className="py-4 px-4 text-center text-[15px] text-black font-normal truncate max-w-[180px]">
-                    {item.username}
-                  </td>
-                  <td className="py-4 px-4 text-center text-[15px] text-black font-normal capitalize">
-                    {item.role === 'guru' ? 'Guru' : item.role === 'dudi' ? 'Dudi' : 'Siswa'}
-                  </td>
-                  <td className="py-4 px-4 text-center text-[15px] text-black font-normal truncate max-w-[180px]">
-                    {item.role === 'guru' ? '-' : (item.companies?.company_name || '-')}
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <div className="flex items-center justify-center gap-3">
-                      {/* Tombol Edit */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(item)}
-                        className="bg-[#000066] hover:bg-[#000044] text-white text-[13px] font-normal px-5 py-1.5 rounded-lg transition-colors shadow-xs cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      {/* Tombol Hapus (Sampah) */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenDeleteSingle(item)}
-                        title="Hapus Anggota"
-                        className="w-8 h-8 rounded-lg bg-[#CC2929] hover:bg-[#B32424] text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
-                      >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          <line x1="10" y1="11" x2="10" y2="17"></line>
-                          <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                      </button>
-                    </div>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="py-14 text-center text-gray-500 text-[14px]">
+                    Memuat data anggota...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : filteredMembers.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-14 text-center text-black text-[14px] font-normal">
+                    Tidak ada anggota yang ditemukan
+                  </td>
+                </tr>
+              ) : (
+                filteredMembers.map((item) => (
+                  <tr key={item.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/60 transition-colors">
+                    <td className="py-4 px-4 text-center text-[15px] text-black font-normal truncate max-w-[180px]">
+                      {item.username}
+                    </td>
+                    <td className="py-4 px-4 text-center text-[15px] text-black font-normal capitalize whitespace-nowrap">
+                      {item.role === 'guru' ? 'Guru' : item.role === 'dudi' ? 'Dudi' : 'Siswa'}
+                    </td>
+                    <td className="py-4 px-4 text-center text-[15px] text-black font-normal truncate max-w-[180px]">
+                      {item.role === 'guru' ? '-' : (item.companies?.company_name || '-')}
+                    </td>
+                    <td className="py-4 px-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-3">
+                        {/* Tombol Edit */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(item)}
+                          className="bg-[#000066] hover:bg-[#000044] text-white text-[13px] font-normal px-5 py-1.5 rounded-lg transition-colors shadow-xs cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                        {/* Tombol Hapus (Sampah) */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenDeleteSingle(item)}
+                          title="Hapus Anggota"
+                          className="w-8 h-8 rounded-lg bg-[#CC2929] hover:bg-[#B32424] text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Horizontal Divider */}
@@ -616,7 +718,7 @@ export default function KelolaAnggotaPage() {
             </div>
 
             {/* Konten */}
-            <p className="text-[14px] text-black leading-relaxed mb-8 text-center sm:text-left">
+            <p className="text-[14px] text-black leading-relaxed mb-8 text-left">
               Yakin untuk menghapus akun <strong>{selectedMember.username}</strong> dengan dudi <strong>{selectedMember.companies?.company_name || '-'}</strong>.
             </p>
 

@@ -123,14 +123,16 @@ export default function PengaturanGuruPage() {
       {/* Nama Akun */}
       <div className="flex flex-col gap-2">
         <label className="text-[15px] font-medium text-black">Nama Akun :</label>
-        <div className="relative">
+        <div className="relative cursor-not-allowed">
           <input
             type="text"
             value={currentUser?.username || "Memuat akun..."}
+            disabled
+            tabIndex={-1}
             readOnly
-            className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none cursor-not-allowed font-medium"
+            className="w-full bg-[#F0F0F0] text-gray-700 text-[15px] py-3.5 pl-4 pr-10 rounded-xl outline-none select-none cursor-not-allowed font-medium pointer-events-none"
           />
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
             </svg>
@@ -254,7 +256,7 @@ export default function PengaturanGuruPage() {
             </div>
 
             {/* Konten */}
-            <p className="text-[14px] text-black leading-relaxed mb-8 text-center sm:text-left">
+            <p className="text-[14px] text-black leading-relaxed mb-8 text-left">
               Yakin untuk keluar dari akun ini?
             </p>
 

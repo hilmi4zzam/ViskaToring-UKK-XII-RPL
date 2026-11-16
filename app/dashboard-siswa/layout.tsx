@@ -63,11 +63,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [mobileMenuOpen]);
 
   return (
-    <div className="flex min-h-screen bg-white flex-col md:flex-row">
+    <div className="flex min-h-screen bg-white flex-col md:flex-row print:block print:min-h-0 print:bg-white">
       {/* Mobile Top Navbar (Gambar 1 & Gambar 2) */}
       <header 
         ref={menuRef} 
-        className="md:hidden w-full bg-[#EDEDED] rounded-b-[24px] px-6 py-4 flex flex-col relative z-40 shadow-xs"
+        className="md:hidden w-full bg-[#EDEDED] rounded-b-[24px] px-6 py-4 flex flex-col relative z-40 shadow-xs print:hidden"
       >
         {/* Bar: Logo & Hamburger */}
         <div className="w-full flex items-center justify-between">
@@ -139,7 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </header>
 
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex w-[300px] bg-[#F0F0F0] flex-col pt-12 pb-10 px-7 flex-shrink-0">
+      <aside className="hidden md:flex w-[300px] bg-[#F0F0F0] flex-col pt-12 pb-10 px-7 flex-shrink-0 print:hidden">
         {/* Logo */}
         <div className="flex items-center gap-4 mb-14 px-2">
           <Image src="/smk.svg" alt="SMK Logo" width={36} height={36} className="w-[36px] h-auto" />
@@ -177,8 +177,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative min-w-0">
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-12 flex flex-col">
+      <main className="flex-1 flex flex-col relative min-w-0 print:block print:p-0">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-12 flex flex-col print:p-0 print:overflow-visible">
           {children}
         </div>
       </main>
