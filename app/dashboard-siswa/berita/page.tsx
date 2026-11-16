@@ -42,7 +42,7 @@ export default function BeritaSiswaPage() {
         if (dudiRes) dataDudi = dudiRes as NewsItem[];
       }
 
-      if (dataSekolah && dataSekolah.length > 0) {
+      if (dataSekolah) {
         setNewsSekolah(dataSekolah as NewsItem[]);
         setNewsDudi(dataDudi);
         return;
@@ -69,17 +69,7 @@ export default function BeritaSiswaPage() {
         }
       }
 
-      // Data Default Sekolah
-      setNewsSekolah([
-        {
-          id: 1,
-          title: 'Anak PKL wajib menaati aturan DUDI.',
-          content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-          kategori: 'siswa',
-          company_id: null,
-          created_at: '2026-09-14T08:00:00.000Z',
-        },
-      ]);
+      setNewsSekolah([]);
       setNewsDudi([]);
     } catch {
       // Fallback aman

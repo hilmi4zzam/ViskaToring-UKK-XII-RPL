@@ -29,7 +29,7 @@ export default function BeritaPembimbingPage() {
           .eq('kategori', 'guru')
           .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           setNewsList(data as NewsItem[]);
           return;
         }
@@ -40,38 +40,17 @@ export default function BeritaPembimbingPage() {
           try {
             const all = JSON.parse(saved) as NewsItem[];
             const filtered = all.filter((b) => b.kategori === 'guru');
-            if (filtered.length > 0) {
-              setNewsList(filtered);
-              return;
-            }
+            setNewsList(filtered);
+            return;
           } catch {
             // ignore error
           }
         }
 
-        // Data Default Sekolah untuk Guru
-        setNewsList([
-          {
-            id: 1,
-            title: 'Anak PKL wajib menaati aturan DUDI.',
-            content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-            kategori: 'guru',
-            company_id: null,
-            created_at: '2026-09-14T08:00:00.000Z',
-          },
-        ]);
+        setNewsList([]);
       } catch {
-        // Fallback aman
-        setNewsList([
-          {
-            id: 1,
-            title: 'Anak PKL wajib menaati aturan DUDI.',
-            content: 'Setiap anak yang pkl harus menaati aturan selayaknya kalian bekerja secara langsung di industri...',
-            kategori: 'guru',
-            company_id: null,
-            created_at: '2026-09-14T08:00:00.000Z',
-          },
-        ]);
+        // Fallback aman jika terjadi error
+        setNewsList([]);
       } finally {
         setLoading(false);
       }
