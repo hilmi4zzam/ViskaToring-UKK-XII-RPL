@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/supabase/client';
 import { Company, UserRole } from '@/supabase/types';
+import { hashPassword } from '@/supabase/auth';
 
 interface MemberItem {
   id: string;
@@ -30,7 +31,7 @@ export default function KelolaAnggotaPage() {
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   // Modal States
-  const [modalType, setModalType] = useState<'delete_single' | 'delete_all' | 'edit_member' | null>(null);
+  const [modalType, setModalType] = useState<'delete_single' | 'delete_all' | 'edit_member' | 'add_member' | null>(null);
   const [selectedMember, setSelectedMember] = useState<MemberItem | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -40,6 +41,14 @@ export default function KelolaAnggotaPage() {
   const [editCompanyId, setEditCompanyId] = useState<number | null>(null);
   const [editDudiQuery, setEditDudiQuery] = useState('');
   const [showEditDudiDropdown, setShowEditDudiDropdown] = useState(false);
+
+  // Add Member Form States
+  const [addUsername, setAddUsername] = useState('');
+  const [addPassword, setAddPassword] = useState('');
+  const [addRole, setAddRole] = useState<'siswa' | 'guru' | 'dudi'>('siswa');
+  const [addCompanyId, setAddCompanyId] = useState<number | null>(null);
+  const [addDudiQuery, setAddDudiQuery] = useState('');
+  const [showAddDudiDropdown, setShowAddDudiDropdown] = useState(false);
 
   // Close filter dropdown on outside click
   useEffect(() => {
@@ -140,7 +149,28 @@ export default function KelolaAnggotaPage() {
     c.company_name.toLowerCase().includes(editDudiQuery.toLowerCase())
   );
 
+  // Filtered companies for add modal
+  const filteredAddCompanies = companies.filter((c) =>
+    c.company_name.toLowerCase().includes(addDudiQuery.toLowerCase())
+  );
+
   // Modal Handlers
+  const handleOpenAdd = () => {
+    setAddUsername('');
+    setAddPassword('');
+    setAddRole('siswa');
+    setAddCompanyId(null);
+    setAddDudiQuery('');
+    setShowAddDudiDropdown(false);
+    setModalType('add_member');
+  };
+
+  const handleSelectAddDudi = (company: Company) => {
+    setAddCompanyId(company.id);
+    setAddDudiQuery(company.company_name);
+    setShowAddDudiDropdown(false);
+  };
+
   const handleOpenDeleteSingle = (member: MemberItem) => {
     setSelectedMember(member);
     setModalType('delete_single');
@@ -238,6 +268,61 @@ export default function KelolaAnggotaPage() {
     } catch (err) {
       console.error(err);
       alert('Terjadi kesalahan saat memperbarui data.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Konfirmasi Simpan Tambah Anggota
+  const handleConfirmAdd = async () => {
+    if (!addUsername.trim()) {
+      alert('Nama anggota tidak boleh kosong.');
+      return;
+    }
+    if (!addPassword) {
+      alert('Kata sandi tidak boleh kosong.');
+      return;
+    }
+    if (addPassword.length < 5) {
+      alert('Kata sandi minimal 5 karakter.');
+      return;
+    }
+
+    if ((addRole === 'siswa' || addRole === 'dudi') && !addCompanyId) {
+      alert('Silakan pilih DUDI terkait.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const hashedPassword = await hashPassword(addPassword);
+
+      const insertPayload: Record<string, unknown> = {
+        username: addUsername.trim(),
+        password: hashedPassword,
+        role: addRole,
+        company_id: (addRole === 'siswa' || addRole === 'dudi') ? addCompanyId : null,
+        status: 'approved',
+        first_login: true,
+      };
+
+      const { error } = await supabase
+        .from('user_accounts')
+        .insert([insertPayload]);
+
+      if (error) {
+        if (error.code === '23505') {
+          alert('Nama anggota sudah terdaftar. Silakan gunakan nama lain.');
+        } else {
+          alert('Gagal menambahkan anggota: ' + error.message);
+        }
+      } else {
+        handleCloseModal();
+        await loadData();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan sistem saat menambahkan anggota.');
     } finally {
       setActionLoading(false);
     }
@@ -385,6 +470,21 @@ export default function KelolaAnggotaPage() {
             </span>
             <span className="text-[13px] text-black font-normal">Total DUDI</span>
           </div>
+
+          {/* Card Tambah Anggota */}
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="bg-[#FACC15] hover:bg-[#EAB308] rounded-[20px] py-3.5 px-6 min-w-[130px] flex flex-col items-center justify-center shadow-xs transition-colors cursor-pointer"
+          >
+            <div className="h-[40px] flex items-center justify-center mb-1 text-black">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
+            <span className="text-[13px] text-black font-normal">Tambah Anggota</span>
+          </button>
         </div>
       </div>
 
@@ -726,6 +826,160 @@ export default function KelolaAnggotaPage() {
                 className="bg-[#000066] hover:bg-[#000044] text-white px-8 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 {actionLoading ? 'Menyimpan...' : 'Edit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Modal Tambah Anggota */}
+      {modalType === 'add_member' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4">
+          <div className="bg-[#EDEDED] w-full max-w-[460px] rounded-[28px] p-7 relative shadow-2xl flex flex-col border border-gray-300">
+            {/* Tombol Kembali (Panah Kiri) */}
+            <button 
+              type="button"
+              onClick={handleCloseModal}
+              className="absolute top-7 left-7 text-black hover:opacity-70 transition-opacity p-1 flex items-center justify-center cursor-pointer"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+
+            {/* Header: Judul */}
+            <div className="text-center pt-0.5 mb-6">
+              <h2 className="text-[22px] font-semibold text-black">Tambah Anggota</h2>
+            </div>
+
+            {/* Field 1: Nama Anggota */}
+            <div className="mb-4">
+              <label className="block text-[14px] font-medium text-black mb-1.5">
+                Nama Anggota :
+              </label>
+              <input
+                type="text"
+                value={addUsername}
+                onChange={(e) => setAddUsername(e.target.value)}
+                placeholder="Masukkan nama anggota..."
+                className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black outline-none border border-transparent focus:border-[#000066] shadow-xs"
+              />
+            </div>
+
+            {/* Field 2: Kata Sandi */}
+            <div className="mb-4">
+              <label className="block text-[14px] font-medium text-black mb-1.5">
+                Kata Sandi :
+              </label>
+              <input
+                type="text"
+                value={addPassword}
+                onChange={(e) => setAddPassword(e.target.value)}
+                placeholder="Masukkan kata sandi..."
+                className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black outline-none border border-transparent focus:border-[#000066] shadow-xs"
+              />
+            </div>
+
+            {/* Field 3: Peran */}
+            <div className="mb-4">
+              <label className="block text-[14px] font-medium text-black mb-2">
+                Peran :
+              </label>
+              <div className="flex items-center gap-6">
+                <label 
+                  className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-black"
+                  onClick={() => setAddRole('siswa')}
+                >
+                  <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
+                    {addRole === 'siswa' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
+                  </div>
+                  <span>Siswa</span>
+                </label>
+                <label 
+                  className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-black"
+                  onClick={() => setAddRole('guru')}
+                >
+                  <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
+                    {addRole === 'guru' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
+                  </div>
+                  <span>Guru Pembimbing</span>
+                </label>
+                <label 
+                  className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-black"
+                  onClick={() => setAddRole('dudi')}
+                >
+                  <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
+                    {addRole === 'dudi' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
+                  </div>
+                  <span>Dudi</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Field 4: Dudi (Untuk siswa & dudi) */}
+            <div className="mb-7 relative">
+              <label className="block text-[14px] font-medium text-black mb-1.5">
+                Dudi :
+              </label>
+              {addRole === 'siswa' || addRole === 'dudi' ? (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={addDudiQuery}
+                    placeholder="Cari nama perusahaan/DUDI..."
+                    onChange={(e) => {
+                      setAddDudiQuery(e.target.value);
+                      setAddCompanyId(null);
+                      setShowAddDudiDropdown(true);
+                    }}
+                    onFocus={() => setShowAddDudiDropdown(true)}
+                    className="w-full bg-white rounded-xl py-3 px-4 text-[14px] text-black outline-none border border-transparent focus:border-[#000066] shadow-xs relative z-10"
+                  />
+
+                  {/* Dropdown Suggestions */}
+                  {showAddDudiDropdown && (
+                    <div className="absolute top-full left-0 w-full mt-2 z-20 shadow-lg">
+                      <div className="flex flex-col gap-[6px] max-h-[160px] overflow-y-auto pr-2 bg-white rounded-xl p-2 border border-gray-200">
+                        {filteredAddCompanies.length > 0 ? (
+                          filteredAddCompanies.map((comp) => (
+                            <div
+                              key={comp.id}
+                              onClick={() => handleSelectAddDudi(comp)}
+                              className={`w-full rounded-lg px-4 py-[10px] text-[13px] cursor-pointer transition-colors border-r-4 ${
+                                addCompanyId === comp.id
+                                  ? 'bg-[#000066]/10 text-[#000066] font-semibold border-[#000066]'
+                                  : 'bg-[#EDEDED] text-gray-700 hover:bg-[#e4e4e4] border-transparent'
+                              }`}
+                            >
+                              {comp.company_name}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="w-full bg-[#EDEDED] rounded-lg px-4 py-[10px] text-[13px] text-gray-500 text-center">
+                            Tidak ada DUDI yang cocok di database
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full bg-white/70 rounded-xl py-3 px-4 text-[14px] text-gray-400 select-none cursor-not-allowed">
+                  Guru tidak memerlukan DUDI
+                </div>
+              )}
+            </div>
+
+            {/* Tombol Simpan Tambah */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleConfirmAdd}
+                disabled={actionLoading}
+                className="bg-[#000066] hover:bg-[#000044] text-white px-8 py-2.5 rounded-xl text-[14px] font-medium transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {actionLoading ? 'Menambahkan...' : 'Tambah'}
               </button>
             </div>
           </div>
