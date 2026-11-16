@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
-import { getStoredUser, clearStoredUser, fetchCurrentUser } from '@/supabase/auth';
+import { getStoredUser, clearStoredUser, fetchCurrentUser, verifyPassword, hashPassword } from '@/supabase/auth';
 import { User } from '@/supabase/types';
 
 export default function PengaturanAdminPage() {
@@ -65,16 +65,18 @@ export default function PengaturanAdminPage() {
         return;
       }
 
-      if (userCheck?.password && userCheck.password !== oldPassword) {
+      const isOldValid = await verifyPassword(oldPassword, userCheck?.password);
+      if (!isOldValid) {
         setMessage({ text: 'Kata sandi lama salah!', type: 'error' });
         setLoading(false);
         return;
       }
 
-      // Update password di user_accounts
+      // Hash password baru sebelum update di user_accounts
+      const hashedPassword = await hashPassword(newPassword.trim());
       const { error: updateError } = await supabase
         .from('user_accounts')
-        .update({ password: newPassword.trim() })
+        .update({ password: hashedPassword })
         .eq('id', currentUser.id);
 
       if (updateError) {

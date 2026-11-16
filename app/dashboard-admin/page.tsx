@@ -294,13 +294,10 @@ export default function DashboardAdminPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#EDEDED] border-b border-gray-300">
-                <th className="w-[40%] text-center font-normal text-[15px] text-black py-3.5 px-4">
+                <th className="w-[60%] text-center font-normal text-[15px] text-black py-3.5 px-4">
                   Nama Pendaftar
                 </th>
-                <th className="w-[35%] text-center font-normal text-[15px] text-black py-3.5 px-4">
-                  Kata Sandi
-                </th>
-                <th className="w-[25%] text-center font-normal text-[15px] text-black py-3.5 px-4">
+                <th className="w-[40%] text-center font-normal text-[15px] text-black py-3.5 px-4">
                   Persetujuan
                 </th>
               </tr>
@@ -308,13 +305,13 @@ export default function DashboardAdminPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={3} className="py-14 text-center text-gray-500 text-[14px]">
+                  <td colSpan={2} className="py-14 text-center text-gray-500 text-[14px]">
                     Memuat data...
                   </td>
                 </tr>
               ) : pendingUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="py-14 text-center text-black text-[14px] font-normal">
+                  <td colSpan={2} className="py-14 text-center text-black text-[14px] font-normal">
                     Tidak ada akun baru yang diajukan
                   </td>
                 </tr>
@@ -323,9 +320,6 @@ export default function DashboardAdminPage() {
                   <tr key={u.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/60 transition-colors">
                     <td className="py-4 px-4 text-center text-[15px] text-black font-normal">
                       {u.username}
-                    </td>
-                    <td className="py-4 px-4 text-center text-[15px] text-black font-normal">
-                      {u.password || '-'}
                     </td>
                     <td className="py-4 px-4 text-center">
                       <div className="flex items-center justify-center gap-3">
@@ -473,7 +467,7 @@ export default function DashboardAdminPage() {
 
             {/* Konten */}
             <p className="text-[14px] text-black leading-relaxed mb-6">
-              Terima pengajuan akun <strong>{selectedUser.username}</strong> dengan kata sandi <strong>{selectedUser.password || '-'}</strong>.
+              Terima pengajuan akun <strong>{selectedUser.username}</strong>?
             </p>
 
             {/* Pilihan Peran */}
@@ -553,7 +547,7 @@ export default function DashboardAdminPage() {
 
             {/* Konten */}
             <p className="text-[14px] text-black leading-relaxed mb-8">
-              Tolak pengajuan akun <strong>{selectedUser.username}</strong> dengan kata sandi <strong>{selectedUser.password || '-'}</strong>.
+              Tolak pengajuan akun <strong>{selectedUser.username}</strong>?
             </p>
 
             {/* Tombol Tolak */}
