@@ -85,7 +85,16 @@ export default function DashboardGuruPage() {
 
       const attMap = new Map<string, Attendance>();
       (attList || []).forEach((att) => {
-        attMap.set(att.user_id, att);
+        const student = studentList.find((s) => s.id === att.user_id);
+        if (!student) return;
+        // Hanya tampilkan absensi jika sesuai dengan DUDI aktif siswa saat ini
+        if (att.company_id) {
+          if (att.company_id === student.company_id) {
+            attMap.set(att.user_id, att);
+          }
+        } else {
+          attMap.set(att.user_id, att);
+        }
       });
 
       // Gabungkan data siswa dengan absensi hari ini

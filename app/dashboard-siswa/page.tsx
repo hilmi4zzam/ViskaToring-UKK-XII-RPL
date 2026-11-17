@@ -80,13 +80,23 @@ export default function DashboardBeranda() {
   const loadDashboardData = useCallback(async (user: User) => {
     setLoadingData(true);
     const today = getLocalDateString();
+    const currentCompanyId = user.company_id;
+
+    if (!currentCompanyId) {
+      setTodayAttendance(null);
+      setStatsWfo(0);
+      setStatsWfh(0);
+      setLoadingData(false);
+      return;
+    }
 
     try {
-      // 1. Ambil absensi hari ini
+      // 1. Ambil absensi hari ini khusus untuk DUDI aktif saat ini
       const { data: attToday, error: attError } = await supabase
         .from('attendances')
         .select('*, reports(*)')
         .eq('user_id', user.id)
+        .eq('company_id', currentCompanyId)
         .eq('tanggal_absen', today)
         .maybeSingle();
 
@@ -100,20 +110,22 @@ export default function DashboardBeranda() {
         setAbsenType('masuk');
       }
 
-      // 2. Hitung jumlah Hadir ke DUDI (WFO)
+      // 2. Hitung jumlah Hadir ke DUDI (WFO) khusus DUDI aktif saat ini
       const { count: wfoCount } = await supabase
         .from('attendances')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
+        .eq('company_id', currentCompanyId)
         .eq('status_kehadiran', 'WFO');
 
       setStatsWfo(wfoCount || 0);
 
-      // 3. Hitung jumlah Hadir WFH
+      // 3. Hitung jumlah Hadir WFH khusus DUDI aktif saat ini
       const { count: wfhCount } = await supabase
         .from('attendances')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
+        .eq('company_id', currentCompanyId)
         .eq('status_kehadiran', 'WFH');
 
       setStatsWfh(wfhCount || 0);
@@ -299,6 +311,12 @@ export default function DashboardBeranda() {
 
     try {
       if (absenType === 'masuk') {
+        if (!currentUser.company_id) {
+          setAbsenError('Akun kamu belum terhubung dengan DUDI. Silakan hubungi admin atau atur di Pengaturan.');
+          setSubmitting(false);
+          return;
+        }
+
         if (todayAttendance?.jam_masuk) {
           setAbsenError('Kamu sudah melakukan absensi masuk hari ini.');
           setSubmitting(false);
@@ -307,6 +325,7 @@ export default function DashboardBeranda() {
 
         const { error } = await supabase.from('attendances').insert({
           user_id: currentUser.id,
+          company_id: currentUser.company_id,
           tanggal_absen: today,
           jam_masuk: nowIso,
           status_kehadiran: statusKehadiran,

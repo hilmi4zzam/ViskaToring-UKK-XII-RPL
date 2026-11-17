@@ -30,11 +30,13 @@ export interface User {
 export interface Attendance {
   id: number;
   user_id: string;
+  company_id?: number | null;
   tanggal_absen: string; // DATE (YYYY-MM-DD)
   jam_masuk: string;     // TIMESTAMPTZ
   jam_pulang: string | null; // TIMESTAMPTZ
   status_kehadiran: StatusKehadiran;
   reports?: Report[];
+  companies?: Company | null;
 }
 
 export interface Report {

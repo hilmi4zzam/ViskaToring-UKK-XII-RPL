@@ -92,6 +92,7 @@ export default function DashboardDudiPage() {
         .from('attendances')
         .select('*, reports(*)')
         .in('user_id', studentIds)
+        .eq('company_id', dudiUser.company_id)
         .eq('tanggal_absen', today);
 
       if (aErr) {

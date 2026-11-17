@@ -30,23 +30,33 @@ export default function LaporanPage() {
   const loadData = useCallback(async (user: User) => {
     setLoading(true);
     const today = getLocalDateString();
+    const currentCompanyId = user.company_id;
+
+    if (!currentCompanyId) {
+      setTodayAttendance(null);
+      setAttendances([]);
+      setLoading(false);
+      return;
+    }
 
     try {
-      // 1. Ambil absensi hari ini untuk tombol status di atas
+      // 1. Ambil absensi hari ini untuk tombol status di atas khusus DUDI aktif saat ini
       const { data: todayAtt } = await supabase
         .from('attendances')
         .select('*')
         .eq('user_id', user.id)
+        .eq('company_id', currentCompanyId)
         .eq('tanggal_absen', today)
         .maybeSingle();
 
       setTodayAttendance(todayAtt);
 
-      // 2. Ambil semua riwayat absensi + laporan user
+      // 2. Ambil semua riwayat absensi + laporan user khusus DUDI aktif saat ini
       const { data, error } = await supabase
         .from('attendances')
         .select('*, reports(*)')
         .eq('user_id', user.id)
+        .eq('company_id', currentCompanyId)
         .order('tanggal_absen', { ascending: false });
 
       if (error) {
