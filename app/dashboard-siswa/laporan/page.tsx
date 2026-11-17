@@ -404,7 +404,7 @@ export default function LaporanPage() {
 
       {/* Footer Khusus Print di Pojok Kiri Bawah */}
       <div className="print-footer text-[12px] text-gray-800 font-normal">
-        portal-viskatoring.web.id
+        viskatoring.web.id
       </div>
     </div>
 
