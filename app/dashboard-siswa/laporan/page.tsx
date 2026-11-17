@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/supabase/client';
-import { getStoredUser } from '@/supabase/auth';
+import { getStoredUser, fetchCurrentUser } from '@/supabase/auth';
 import { Attendance, User } from '@/supabase/types';
 import { getLocalDateString } from '@/supabase/helpers';
 
@@ -18,6 +18,7 @@ export default function LaporanPage() {
 
   const [selectedYear, setSelectedYear] = useState(currentYearStr);
   const [selectedMonth, setSelectedMonth] = useState(MONTH_NAMES[currentMonthIdx]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
@@ -62,8 +63,11 @@ export default function LaporanPage() {
 
   useEffect(() => {
     const initializeReports = async () => {
-      const user = getStoredUser();
-      if (user) await loadData(user);
+      const stored = getStoredUser();
+      if (!stored) return;
+      const user = (await fetchCurrentUser()) || stored;
+      setCurrentUser(user);
+      await loadData(user);
     };
 
     void initializeReports();
@@ -94,7 +98,9 @@ export default function LaporanPage() {
   const isSudahPulang = Boolean(todayAttendance?.jam_pulang);
 
   return (
-    <div className="w-full flex flex-col gap-6 print:gap-2">
+    <>
+      {/* Tampilan Layar Utama (Disembunyikan Sepenuhnya Saat Print) */}
+      <div className="w-full flex flex-col gap-6 print:hidden">
       {/* Top Buttons Status */}
       <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-center print:hidden">
         <button 
@@ -173,82 +179,71 @@ export default function LaporanPage() {
         </div>
       </div>
 
-      {/* Header Dokumen Khusus Print */}
-      <div className="hidden print:block text-center mb-2">
-        <h1 className="text-xl font-bold uppercase tracking-wide text-black">Rekapitulasi Absensi Siswa</h1>
-        <p className="text-[13px] text-gray-700 mt-1">Periode: {selectedMonth} {selectedYear}</p>
-      </div>
-
-      {/* Table Section */}
-      <div className="w-full bg-white mt-4 print:mt-0 border border-gray-400 print:border-black rounded-2xl print:rounded-none overflow-hidden shadow-sm print:shadow-none">
-        <div className="overflow-x-auto print:overflow-visible">
-          <table className="w-full border-collapse text-center print:border print:border-black">
-            <thead>
-              <tr className="bg-[#EBEBEB] border-b border-gray-400 print:border-black print:bg-gray-100">
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%] print:border print:border-black">Tanggal</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[15%] print:border print:border-black">Status</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%] print:border print:border-black">Waktu Masuk</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%] print:border print:border-black">Waktu Pulang</th>
-                <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[25%] print:border print:border-black">
-                  <span className="print:hidden">Laporan</span>
-                  <span className="hidden print:inline">TTD Instruktur</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px] print:border print:border-black">
-                    Memuat data riwayat absensi dari Supabase...
-                  </td>
+        {/* Table Section Layar Utama */}
+        <div className="w-full bg-white mt-4 border border-gray-400 rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-center">
+              <thead>
+                <tr className="bg-[#EBEBEB] border-b border-gray-400">
+                  <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Tanggal</th>
+                  <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[15%]">Status</th>
+                  <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Waktu Masuk</th>
+                  <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[20%]">Waktu Pulang</th>
+                  <th className="py-3.5 px-4 font-normal text-[15px] text-black w-[25%]">Laporan</th>
                 </tr>
-              ) : filteredAttendances.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px] print:border print:border-black">
-                    Tidak ada data absensi pada {selectedMonth} {selectedYear}.
-                  </td>
-                </tr>
-              ) : (
-                filteredAttendances.map((att) => (
-                  <tr key={att.id} className="hover:bg-gray-50/60 transition-colors print:hover:bg-transparent">
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
-                      {formatTanggal(att.tanggal_absen)}
-                    </td>
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
-                      {att.status_kehadiran || '-'}
-                    </td>
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
-                      {formatJam(att.jam_masuk)}
-                    </td>
-                    <td className="py-3.5 px-4 text-[15px] text-black font-normal print:border print:border-black">
-                      {formatJam(att.jam_pulang)}
-                    </td>
-                    <td className="py-2.5 px-4 print:border print:border-black print:p-0">
-                      <div className="flex justify-center items-center print:hidden">
-                        <button 
-                          onClick={() => {
-                            setSelectedAttendance(att);
-                            setModalOpen(true);
-                          }}
-                          className={`${
-                            att.jam_masuk 
-                              ? 'bg-[#000066] hover:bg-[#000044]' 
-                              : 'bg-[#CC2929] hover:bg-[#B32424]'
-                          } text-white px-5 py-2 rounded-lg font-normal text-[14px] transition-colors shadow-xs cursor-pointer`}
-                        >
-                          {att.jam_masuk ? 'Lihat Laporan' : 'Belum Absen'}
-                        </button>
-                      </div>
-                      {/* Kolom TTD Instruktur saat dicetak */}
-                      <div className="hidden print:block w-full h-12" />
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px]">
+                      Memuat data riwayat absensi dari Supabase...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : filteredAttendances.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-gray-500 text-[15px]">
+                      Tidak ada data absensi pada {selectedMonth} {selectedYear}.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAttendances.map((att) => (
+                    <tr key={att.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                        {formatTanggal(att.tanggal_absen)}
+                      </td>
+                      <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                        {att.status_kehadiran || '-'}
+                      </td>
+                      <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                        {formatJam(att.jam_masuk)}
+                      </td>
+                      <td className="py-3.5 px-4 text-[15px] text-black font-normal">
+                        {formatJam(att.jam_pulang)}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <div className="flex justify-center items-center">
+                          <button 
+                            onClick={() => {
+                              setSelectedAttendance(att);
+                              setModalOpen(true);
+                            }}
+                            className={`${
+                              att.jam_masuk 
+                                ? 'bg-[#000066] hover:bg-[#000044]' 
+                                : 'bg-[#CC2929] hover:bg-[#B32424]'
+                            } text-white px-5 py-2 rounded-lg font-normal text-[14px] transition-colors shadow-xs cursor-pointer`}
+                          >
+                            {att.jam_masuk ? 'Lihat Laporan' : 'Belum Absen'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
       {/* Modal Detail Laporan */}
       {modalOpen && selectedAttendance && (
@@ -331,8 +326,8 @@ export default function LaporanPage() {
             <div className="mt-5 flex justify-end">
               <button 
                 type="button"
-                onClick={() => setModalOpen(false)}
-                className="bg-[#000066] text-white px-8 py-2.5 rounded-xl font-medium text-[14px] hover:bg-[#000044] transition-colors shadow-sm"
+                onClick={() => setModalOpen(false)} 
+                className="bg-[#000066] text-white px-8 py-2.5 rounded-xl font-medium text-[14px] hover:bg-[#000044] transition-colors shadow-sm cursor-pointer"
               >
                 Tutup
               </button>
@@ -341,5 +336,118 @@ export default function LaporanPage() {
         </div>
       )}
     </div>
-  );
+
+    {/* DOKUMEN KHUSUS PRINT (Sesuai Persis Gambar Lampiran 2) */}
+    <div className="print-page-document hidden text-black">
+      {/* Judul Dokumen */}
+      <div className="text-center mb-8 pt-2">
+        <h1 className="text-[19px] font-bold uppercase tracking-wider text-black">
+          REKAPITULASI ABSENSI SISWA
+        </h1>
+      </div>
+
+      {/* Info Siswa & Periode */}
+      <div className="mb-6 text-black text-[13px] font-normal leading-relaxed">
+        <div className="flex items-center">
+          <span className="w-24">Nama Siswa</span>
+          <span className="mr-2.5">:</span>
+          <span>{currentUser?.username || 'Skolastika Athalia Calya'}</span>
+        </div>
+        <div className="flex items-center mt-1">
+          <span className="w-24">Periode</span>
+          <span className="mr-2.5">:</span>
+          <span>{selectedMonth} {selectedYear}</span>
+        </div>
+      </div>
+
+      {/* Tabel Rekapitulasi Khusus Print */}
+      <table className="w-full border-collapse border border-black text-center text-black">
+        <thead>
+          <tr className="bg-white">
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[18%]">Tanggal</th>
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[12%]">Status</th>
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[20%]">Waktu Masuk</th>
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[20%]">Waktu Pulang</th>
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[30%]">TTD Instruktur</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredAttendances.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="border border-black py-8 text-center text-gray-500 text-[13px]">
+                Tidak ada data absensi pada {selectedMonth} {selectedYear}.
+              </td>
+            </tr>
+          ) : (
+            filteredAttendances.map((att) => (
+              <tr key={att.id}>
+                <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal">
+                  {formatTanggal(att.tanggal_absen)}
+                </td>
+                <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal">
+                  {att.status_kehadiran || '-'}
+                </td>
+                <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal">
+                  {formatJam(att.jam_masuk)}
+                </td>
+                <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal">
+                  {formatJam(att.jam_pulang)}
+                </td>
+                <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal h-9">
+                  {/* Kotak kosong untuk tanda tangan instruktur */}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+
+      {/* Footer Khusus Print di Pojok Kiri Bawah */}
+      <div className="print-footer text-[12px] text-gray-800 font-normal">
+        portal-viskatoring.web.id
+      </div>
+    </div>
+
+    {/* Global Print Styles untuk Menghilangkan Header/Footer Bawaan Browser */}
+    <style>{`
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 0 !important;
+        }
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          width: 100% !important;
+          height: 100% !important;
+        }
+        body * {
+          visibility: hidden !important;
+        }
+        .print-page-document, .print-page-document * {
+          visibility: visible !important;
+        }
+        .print-page-document {
+          display: block !important;
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 210mm !important;
+          min-height: 297mm !important;
+          padding: 24mm 20mm 20mm 20mm !important;
+          box-sizing: border-box !important;
+          background: white !important;
+        }
+        .print-footer {
+          position: absolute !important;
+          bottom: 20mm !important;
+          left: 20mm !important;
+        }
+      }
+    `}</style>
+  </>
+);
 }
