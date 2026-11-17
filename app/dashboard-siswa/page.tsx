@@ -15,6 +15,9 @@ export default function DashboardBeranda() {
   const [statsWfh, setStatsWfh] = useState<number>(0);
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
   const [loadingData, setLoadingData] = useState<boolean>(true);
+  const [isOffline, setIsOffline] = useState<boolean>(() => 
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
 
   // Modal Absensi State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +32,26 @@ export default function DashboardBeranda() {
   const [submitting, setSubmitting] = useState(false);
   const [absenError, setAbsenError] = useState('');
 
+  // Camera Capture State
+  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Deteksi status koneksi internet (online/offline)
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Efek untuk jam realtime
   useEffect(() => {
@@ -150,11 +172,11 @@ export default function DashboardBeranda() {
 
         if (dist <= radius) {
           setStatusKehadiran('WFO');
-          setGpsNotice(`Di dalam radius DUDI (${dist}m dari kantor, batas: ${radius}m).`);
+          setGpsNotice(`Di dalam radius DUDI (${dist}m dari kantor).`);
         } else {
           setStatusKehadiran('WFH');
           const distLabel = dist >= 1000 ? `${(dist / 1000).toFixed(1)} km` : `${dist} m`;
-          setGpsNotice(`Di luar radius DUDI (${distLabel} dari kantor, batas: ${radius}m).`);
+          setGpsNotice(`Di luar radius DUDI (${distLabel} dari kantor).`);
         }
         setDetectingGps(false);
       },
@@ -167,6 +189,76 @@ export default function DashboardBeranda() {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [currentUser?.companies]);
+
+  // Kamera & Media Lifecycle
+  const stopCamera = useCallback(() => {
+    if (cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+    }
+    setCameraStream(null);
+    setIsCameraActive(false);
+  }, []);
+
+  const startCamera = async (mode: 'user' | 'environment' = facingMode) => {
+    try {
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+        cameraStreamRef.current = null;
+      }
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        cameraInputRef.current?.click();
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      cameraStreamRef.current = stream;
+      setCameraStream(stream);
+      setIsCameraActive(true);
+    } catch (err) {
+      console.warn('Gagal membuka live stream camera, fallback ke native input:', err);
+      cameraInputRef.current?.click();
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      if (facingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setBuktiImage(dataUrl);
+      setAbsenError('');
+    }
+    stopCamera();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isModalOpen && cameraStreamRef.current) {
+      cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+      setCameraStream(null);
+      setIsCameraActive(false);
+    }
+  }, [isModalOpen]);
 
   // Handler upload foto bukti laporan (Base64)
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,6 +281,8 @@ export default function DashboardBeranda() {
     const reader = new FileReader();
     reader.onloadend = () => {
       if (typeof reader.result === 'string') setBuktiImage(reader.result);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
     };
     reader.onerror = () => setAbsenError('Foto bukti gagal dibaca. Silakan pilih file lain.');
     reader.readAsDataURL(file);
@@ -287,6 +381,7 @@ export default function DashboardBeranda() {
       }
 
       // Reset form dan refresh data
+      stopCamera();
       setJudulLaporan('');
       setDeskripsiLaporan('');
       setBuktiImage(null);
@@ -329,7 +424,13 @@ export default function DashboardBeranda() {
         
         {/* Pratinjau Absensi atau Highlight Laporan Absen Pulang (order-2 on mobile, order-1 on desktop) */}
         <div className="order-2 md:order-1 flex-1 flex flex-col">
-          {isSudahPulang ? (
+          {loadingData ? (
+            <div className="flex-1 bg-[#EDEDED] md:bg-[#F0F0F0] rounded-[24px] flex flex-col items-center justify-center p-8 md:p-10 text-center min-h-[220px] md:min-h-0">
+              <p className="text-[16px] md:text-[18px] font-medium text-black">
+                Memuat data...
+              </p>
+            </div>
+          ) : isSudahPulang ? (
             <div className="flex-1 bg-white border border-gray-400 md:border-gray-300 rounded-[24px] p-6 md:p-8 flex flex-col justify-between shadow-xs md:shadow-sm">
               <div>
                 {/* Header Highlight */}
@@ -414,29 +515,37 @@ export default function DashboardBeranda() {
         <div className="order-1 md:order-2 flex-1 bg-white border border-gray-400 md:border-gray-300 rounded-[24px] p-4 sm:p-6 md:p-8 flex flex-col gap-3.5 md:gap-7 shadow-xs md:shadow-sm">
           
           <div className="flex flex-col gap-3 md:gap-4">
-            {/* Status Masuk */}
-            <button 
-              className={`w-full text-white text-[15px] md:text-[16px] font-medium py-3.5 md:py-4 rounded-xl transition-colors ${
-                isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
-              }`}
-            >
-              {isSudahMasuk 
-                ? `Sudah Absensi Masuk (${formatTimeOnly(todayAttendance?.jam_masuk)})`
-                : 'Belum Absensi Masuk'
-              }
-            </button>
+            {loadingData ? (
+              <div className="w-full bg-[#EDEDED] md:bg-[#F0F0F0] text-black text-[15px] md:text-[16px] font-medium py-7 md:py-8 rounded-xl text-center flex items-center justify-center">
+                Memuat data...
+              </div>
+            ) : (
+              <>
+                {/* Status Masuk */}
+                <button 
+                  className={`w-full text-white text-[15px] md:text-[16px] font-medium py-3.5 md:py-4 rounded-xl transition-colors ${
+                    isSudahMasuk ? 'bg-[#299946]' : 'bg-[#CC2929]'
+                  }`}
+                >
+                  {isSudahMasuk 
+                    ? `Sudah Absensi Masuk (${formatTimeOnly(todayAttendance?.jam_masuk)})`
+                    : 'Belum Absensi Masuk'
+                  }
+                </button>
 
-            {/* Status Pulang */}
-            <button 
-              className={`w-full text-white text-[15px] md:text-[16px] font-medium py-3.5 md:py-4 rounded-xl transition-colors ${
-                isSudahPulang ? 'bg-[#299946]' : 'bg-[#CC2929]'
-              }`}
-            >
-              {isSudahPulang 
-                ? `Sudah Absensi Pulang (${formatTimeOnly(todayAttendance?.jam_pulang)})`
-                : 'Belum Absensi Pulang'
-              }
-            </button>
+                {/* Status Pulang */}
+                <button 
+                  className={`w-full text-white text-[15px] md:text-[16px] font-medium py-3.5 md:py-4 rounded-xl transition-colors ${
+                    isSudahPulang ? 'bg-[#299946]' : 'bg-[#CC2929]'
+                  }`}
+                >
+                  {isSudahPulang 
+                    ? `Sudah Absensi Pulang (${formatTimeOnly(todayAttendance?.jam_pulang)})`
+                    : 'Belum Absensi Pulang'
+                  }
+                </button>
+              </>
+            )}
           </div>
 
           <div className="bg-[#EDEDED] md:bg-[#F0F0F0] rounded-[22px] md:rounded-[24px] py-8 px-6 md:p-8 min-h-[190px] md:min-h-0 flex-1 flex flex-col items-center justify-center border border-gray-200/60 md:border-gray-200">
@@ -444,18 +553,25 @@ export default function DashboardBeranda() {
               {currentTime}
             </div>
             <button 
-              disabled={isSudahMasuk && isSudahPulang}
+              disabled={loadingData || isOffline || (isSudahMasuk && isSudahPulang)}
               onClick={() => {
-                if (isSudahMasuk && isSudahPulang) return;
+                if (loadingData || isOffline || (isSudahMasuk && isSudahPulang)) return;
                 setAbsenError('');
                 setIsModalOpen(true);
                 if (absenType === 'masuk') {
                   detectLocation();
                 }
               }}
-              className="w-full max-w-[240px] md:max-w-none bg-white text-black text-[15px] md:text-[16px] font-medium py-3 md:py-4 rounded-xl shadow-xs md:shadow-sm hover:bg-gray-50 transition-colors disabled:cursor-not-allowed cursor-pointer text-center"
+              className="w-full max-w-[240px] md:max-w-none bg-white text-black text-[15px] md:text-[16px] font-medium py-3 md:py-4 rounded-xl shadow-xs md:shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white cursor-pointer text-center"
             >
-              {isSudahMasuk && isSudahPulang ? 'Absensi Lengkap' : 'Absen Sekarang'}
+              {loadingData 
+                ? 'Memuat data...' 
+                : isOffline
+                  ? 'Koneksi Terputus'
+                  : isSudahMasuk && isSudahPulang 
+                    ? 'Absensi Lengkap' 
+                    : 'Absen Sekarang'
+              }
             </button>
           </div>
           
@@ -469,7 +585,13 @@ export default function DashboardBeranda() {
             
             {/* Header Modal */}
             <div className="flex items-center mb-8 relative">
-              <button onClick={() => setIsModalOpen(false)} className="absolute left-0 text-black hover:text-gray-600 transition-colors">
+              <button 
+                onClick={() => {
+                  stopCamera();
+                  setIsModalOpen(false);
+                }} 
+                className="absolute left-0 text-black hover:text-gray-600 transition-colors cursor-pointer"
+              >
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="19" y1="12" x2="5" y2="12"></line>
                   <polyline points="12 19 5 12 12 5"></polyline>
@@ -488,10 +610,11 @@ export default function DashboardBeranda() {
                   <button 
                     type="button"
                     onClick={() => {
+                      stopCamera();
                       setAbsenType('masuk');
                       detectLocation();
                     }}
-                    className={`flex-1 py-3 rounded-xl font-medium text-[15px] transition-all bg-white border-2 ${
+                    className={`flex-1 py-3 rounded-xl font-medium text-[15px] transition-all bg-white border-2 cursor-pointer ${
                       absenType === 'masuk' ? 'border-[#000066] text-[#000066]' : 'border-transparent text-gray-500 hover:border-gray-300 shadow-sm'
                     }`}
                   >
@@ -500,7 +623,7 @@ export default function DashboardBeranda() {
                   <button 
                     type="button"
                     onClick={() => setAbsenType('pulang')}
-                    className={`flex-1 py-3 rounded-xl font-medium text-[15px] transition-all bg-white border-2 ${
+                    className={`flex-1 py-3 rounded-xl font-medium text-[15px] transition-all bg-white border-2 cursor-pointer ${
                       absenType === 'pulang' ? 'border-[#000066] text-[#000066]' : 'border-transparent text-gray-500 hover:border-gray-300 shadow-sm'
                     }`}
                   >
@@ -530,13 +653,12 @@ export default function DashboardBeranda() {
                   
                   <div className="bg-white rounded-xl p-4 border border-gray-200 flex flex-col gap-2.5 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <div className={`px-3.5 py-1.5 rounded-lg text-[14px] font-semibold flex items-center gap-2 ${
+                      <div className={`px-3.5 py-1.5 rounded-lg text-[14px] font-semibold flex items-center ${
                         statusKehadiran === 'WFO' 
                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
-                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          : 'text-black border border-black-800'
                       }`}>
-                        <span className={`w-2.5 h-2.5 rounded-full ${statusKehadiran === 'WFO' ? 'bg-emerald-600' : 'bg-amber-600'} animate-pulse`}></span>
-                        {statusKehadiran === 'WFO' ? 'WFO (Hadir di DUDI)' : 'WFH (Bekerja dari Rumah)'}
+                        {statusKehadiran === 'WFO' ? 'WFO' : 'WFH'}
                       </div>
 
                       {detectedDistance !== null && (
@@ -583,11 +705,13 @@ export default function DashboardBeranda() {
                     ></textarea>
                   </div>
 
-                  {/* Foto Bukti */}
+                  {/* Foto Bukti Kegiatan */}
                   <div>
                     <label className="block text-[15px] font-medium mb-3 text-black">
                       Foto Bukti Kegiatan :
                     </label>
+
+                    {/* Hidden Inputs untuk File Picker & Kamera HP Native */}
                     <input 
                       type="file" 
                       ref={fileInputRef} 
@@ -595,25 +719,135 @@ export default function DashboardBeranda() {
                       onChange={handleImageChange} 
                       className="hidden" 
                     />
-                    <button 
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-white rounded-xl px-6 py-4 flex items-center justify-center gap-3 shadow-sm hover:bg-gray-50 transition-colors w-max"
-                    >
-                      <svg className="text-gray-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                      </svg>
-                      <span className="text-[15px] font-medium text-gray-700">
-                        {buktiImage ? 'Foto Terpilih (Klik untuk Ganti)' : 'Unggah Gambar'}
-                      </span>
-                    </button>
+                    <input 
+                      type="file" 
+                      ref={cameraInputRef} 
+                      accept="image/*" 
+                      capture="environment" 
+                      onChange={handleImageChange} 
+                      className="hidden" 
+                    />
 
+                    {/* Live Viewfinder Kamera jika Aktif */}
+                    {isCameraActive && (
+                      <div className="bg-black rounded-2xl overflow-hidden relative border border-gray-300 shadow-md flex flex-col mb-4">
+                        <div className="relative w-full aspect-video sm:max-h-[280px] bg-black flex items-center justify-center overflow-hidden">
+                          <video
+                            ref={(el) => {
+                              videoRef.current = el;
+                              if (el && cameraStream && el.srcObject !== cameraStream) {
+                                el.srcObject = cameraStream;
+                              }
+                            }}
+                            autoPlay
+                            playsInline
+                            muted
+                            className={`w-full h-full object-cover ${facingMode === 'user' ? '-scale-x-100' : ''}`}
+                          />
+                          
+                          {/* Tombol Putar Kamera Depan/Belakang */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+                              setFacingMode(nextMode);
+                              void startCamera(nextMode);
+                            }}
+                            title="Putar Kamera Depan / Belakang"
+                            className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2.5 rounded-full backdrop-blur-xs transition-colors cursor-pointer flex items-center gap-1.5 text-xs"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                            </svg>
+                            <span className="hidden sm:inline">Balik Kamera</span>
+                          </button>
+                        </div>
+
+                        {/* Kontrol Shutter & Aksi Kamera */}
+                        <div className="p-3 bg-neutral-900 flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={stopCamera}
+                            className="text-gray-300 hover:text-white text-[14px] font-medium px-3 py-2 cursor-pointer"
+                          >
+                            Batal
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={capturePhoto}
+                            className="bg-white hover:bg-gray-100 text-[#000066] font-semibold text-[14px] px-6 py-2.5 rounded-full flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+                          >
+                            <span className="w-3.5 h-3.5 rounded-full bg-red-600"></span>
+                            <span>Ambil Foto</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tombol Pilihan Input Gambar: Kamera HP atau Galeri */}
+                    {!isCameraActive && !buktiImage && (
+                      <div className="flex flex-wrap gap-3">
+                        <button 
+                          type="button"
+                          onClick={() => void startCamera('environment')}
+                          className="bg-white rounded-xl px-5 py-3.5 flex items-center justify-center gap-2.5 shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors cursor-pointer"
+                        >
+                          <svg className="text-gray-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                          </svg>
+                          <span className="text-[14px] md:text-[15px] font-medium text-black">
+                            Buka Kamera
+                          </span>
+                        </button>
+
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            stopCamera();
+                            fileInputRef.current?.click();
+                          }}
+                          className="bg-white rounded-xl px-5 py-3.5 flex items-center justify-center gap-2.5 shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors cursor-pointer"
+                        >
+                          <svg className="text-gray-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                          </svg>
+                          <span className="text-[14px] md:text-[15px] font-medium text-gray-700">
+                            Unggah dari Galeri
+                          </span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Preview Gambar Terpilih: Kotak Foto Sederhana dengan Tombol Silang di Pojok Kiri Atas */}
                     {buktiImage && (
-                      <div className="mt-3">
+                      <div className="relative inline-block rounded-2xl overflow-hidden border border-gray-300 shadow-sm bg-white">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={buktiImage} alt="Bukti" className="h-28 rounded-lg object-cover border border-gray-300" />
+                        <img 
+                          src={buktiImage} 
+                          alt="Bukti Foto" 
+                          className="w-36 h-36 sm:w-44 sm:h-44 object-cover block rounded-2xl" 
+                        />
+                        {/* Tombol Silang di Pojok Kiri Atas */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            stopCamera();
+                            setBuktiImage(null);
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                            if (cameraInputRef.current) cameraInputRef.current.value = '';
+                          }}
+                          title="Hapus foto"
+                          className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-400 text-gray-700 hover:text-black flex items-center justify-center backdrop-blur-xs transition-colors cursor-pointer shadow-md"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
                       </div>
                     )}
                   </div>
