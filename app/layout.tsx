@@ -10,6 +10,14 @@ const hostGrotesk = Host_Grotesk({
 export const metadata: Metadata = {
   title: "ViskaToring",
   description: "Portal Absensi Magang",
+  icons: {
+    icon: [
+      {
+        url: "/smk.svg",
+        type: "image/svg+xml",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

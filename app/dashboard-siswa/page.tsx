@@ -436,12 +436,11 @@ export default function DashboardBeranda() {
                 {/* Header Highlight */}
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#299946]"></span>
-                    <span className="text-[14px] font-semibold text-gray-800">
-                      Laporan Absensi Pulang
+                    <span className="text-[16px] font-semibold text-gray-800">
+                      Preview Laporan
                     </span>
                   </div>
-                  <span className="text-[12px] bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-full border border-emerald-200">
+                  <span className="text-[12px] font-medium px-2.5 py-1 rounded-lg border border-black-900">
                     {todayAttendance?.status_kehadiran} • {formatTimeOnly(todayAttendance?.jam_pulang)}
                   </span>
                 </div>
@@ -655,7 +654,7 @@ export default function DashboardBeranda() {
                     <div className="flex items-center justify-between">
                       <div className={`px-3.5 py-1.5 rounded-lg text-[14px] font-semibold flex items-center ${
                         statusKehadiran === 'WFO' 
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                          ? 'text-black border border-black-800' 
                           : 'text-black border border-black-800'
                       }`}>
                         {statusKehadiran === 'WFO' ? 'WFO' : 'WFH'}
