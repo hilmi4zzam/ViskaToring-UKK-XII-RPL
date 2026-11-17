@@ -56,11 +56,3 @@ export interface NewsItem {
   created_at: string;
   companies?: Company | null;
 }
-
-export interface BeritaItem {
-  id: string | number;
-  judul: string;
-  deskripsi: string;
-  target: 'siswa' | 'guru' | 'semua';
-  created_at: string;
-}
