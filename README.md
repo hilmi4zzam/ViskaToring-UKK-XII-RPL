@@ -34,7 +34,6 @@
 
 ## Akun Demo & Hak Akses
 
->  **Catatan:** Untuk login Admin, klik logo SMK **7 kali berturut-turut** di halaman utama untuk memunculkan halaman Login Admin tersembunyi.
 
 ###  Siswa
 | Field | Value |
@@ -387,3 +386,22 @@ viskatoring/
     ├── smk.svg                         # Logo SMK (favicon)
     └── halaman depan.webp              # Foto latar halaman login
 ```
+
+## Screenshot tampilan website
+
+**Login**
+1. Global (Kecuali Admin)
+<img width="1279" height="641" alt="image" src="https://github.com/user-attachments/assets/87e0339a-d967-490b-ba26-f8d06df64bcd" />
+2. Admin
+<img width="1279" height="640" alt="image" src="https://github.com/user-attachments/assets/fe39083c-8445-4686-a105-9c230a1135cb" />
+
+
+**Konfigurasi**
+1. Siswa
+<img width="1279" height="639" alt="image" src="https://github.com/user-attachments/assets/e906d71d-a628-49c0-b47f-a7b12b06291c" />
+2. Guru
+<img width="1279" height="641" alt="image" src="https://github.com/user-attachments/assets/36cb48a3-61ad-4541-87a3-f57fa9f16807" />
+3. DUDI
+<img width="1279" height="639" alt="image" src="https://github.com/user-attachments/assets/91b1e0e0-f3f0-4e49-9a2b-2b69504d2019" />
+
+**Dashboard**
