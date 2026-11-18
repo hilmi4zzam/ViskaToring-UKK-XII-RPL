@@ -100,96 +100,187 @@
 
 ---
 
-## Rancangan Database (ERD)
+## Rancangan Database (Entity Relationship Diagram - ERD)
 
-Aplikasi menggunakan database relasional PostgreSQL (Supabase) yang terdiri dari **5 tabel** yang saling berelasi:
+Aplikasi menggunakan database relasional PostgreSQL (Supabase) yang terdiri dari **5 tabel utama** yang saling berelasi:
 
+```mermaid
+erDiagram
+    COMPANIES ||--o{ USER_ACCOUNTS : "memiliki siswa / dudi"
+    COMPANIES ||--o{ ATTENDANCES : "lokasi presensi"
+    COMPANIES ||--o{ NEWS : "menerbitkan (opsional)"
+    USER_ACCOUNTS ||--o{ ATTENDANCES : "melakukan presensi"
+    ATTENDANCES ||--o| REPORTS : "memuat laporan kegiatan"
+
+    COMPANIES {
+        bigint id PK "ID unik DUDI (Identity)"
+        text company_name "Nama perusahaan / tempat PKL"
+        float8 latitude "Koordinat lintang kantor"
+        float8 longitude "Koordinat bujur kantor"
+        int4 radius_meters "Radius toleransi WFO (meter)"
+        timestamptz created_at "Waktu data dibuat"
+    }
+
+    USER_ACCOUNTS {
+        uuid id PK "ID unik akun (gen_random_uuid)"
+        text username UK "Nama lengkap / nama akun login"
+        text password "Kata sandi terenkripsi (bcrypt hash)"
+        text role "Peran: siswa / guru / dudi / admin"
+        text status "Status akun: pending / approved / rejected"
+        bool first_login "Status onboarding / ganti sandi awal"
+        bigint company_id FK "DUDI aktif siswa / akun DUDI"
+        bigint pending_company_id FK "DUDI tujuan mutasi yang diajukan"
+        text pending_company_status "Status mutasi: pending / approved / rejected"
+        jsonb selected "Daftar ID siswa binaan terpilih (Guru)"
+        timestamptz created_at "Waktu akun didaftarkan"
+    }
+
+    ATTENDANCES {
+        bigint id PK "ID unik presensi harian (Identity)"
+        uuid user_id FK "Relasi ke ID siswa pemilik presensi"
+        bigint company_id FK "Relasi ke DUDI saat presensi dilakukan"
+        date tanggal_absen "Tanggal kehadiran (YYYY-MM-DD)"
+        timestamptz jam_masuk "Waktu rekam absen masuk"
+        timestamptz jam_pulang "Waktu rekam absen pulang"
+        text status_kehadiran "Status: WFO / WFH / ALPA"
+        timestamptz created_at "Waktu baris dibuat"
+    }
+
+    REPORTS {
+        bigint id PK "ID unik laporan kegiatan (Identity)"
+        bigint attendance_id FK "Relasi ke presensi terkait"
+        text judul_laporan "Judul pekerjaan / kegiatan harian"
+        text deskripsi_laporan "Uraian detail aktivitas magang"
+        text bukti_laporan "Foto bukti kegiatan (Base64 string)"
+        timestamptz created_at "Waktu laporan dikirimkan"
+    }
+
+    NEWS {
+        bigint id PK "ID unik berita (Identity)"
+        text title "Judul berita / pengumuman"
+        text content "Isi teks pengumuman"
+        text kategori "Target pembaca: siswa / guru / dudi"
+        bigint company_id FK "Opsional DUDI spesifik penerbit berita"
+        timestamptz created_at "Waktu berita dipublikasikan"
+    }
 ```
-companies ──< user_accounts ──< attendances ──< reports
-                                     ^
-                              (company_id FK)
-                              
-news (berdiri sendiri, opsional FK ke companies)
+
+---
+
+### Penjelasan Relasi Antar Tabel:
+1. **`companies` → `user_accounts` (One-to-Many):** Satu DUDI dapat memiliki banyak akun siswa magang dan satu akun pembimbing industri.
+2. **`user_accounts` → `attendances` (One-to-Many):** Satu siswa memiliki banyak baris riwayat presensi harian.
+3. **`companies` → `attendances` (One-to-Many):** Setiap baris absensi mengunci `company_id` tempat siswa magang pada hari tersebut. Hal ini menjamin bahwa jika siswa berpindah DUDI, seluruh arsip presensi DUDI lama tetap terisolasi dan tidak tercampur.
+4. **`attendances` → `reports` (One-to-One):** Setiap sesi kehadiran pada hari tersebut memiliki satu laporan kegiatan harian dan foto bukti saat absen pulang.
+5. **`companies` → `news` (One-to-Many, Opsional):** Berita pengumuman dapat ditujukan secara global oleh admin atau khusus siswa pada DUDI tertentu.
+
+---
+
+## Flowchart Sistem (Alur Kerja Proyek)
+
+Berikut adalah diagram alir (*flowchart*) operasional sistem ViskaToring yang mencakup seluruh alur bisnis utama:
+
+### 1. Alur Autentikasi, Role Guard & Onboarding Pengguna
+
+```mermaid
+flowchart TD
+    Start([Mulai: Pengguna Akses Web]) --> Portal{Halaman Login Utama}
+    
+    Portal -->|Klik Logo SMK 7 Kali| LoginAdmin[Halaman Login Admin Rahasia]
+    Portal -->|Input Username & Password| VerifyAuth{Verifikasi Kredensial via bcrypt}
+    
+    LoginAdmin --> VerifyAdmin{Verifikasi Admin}
+    VerifyAdmin -->|Valid| DashAdmin[Dashboard Admin]
+    VerifyAdmin -->|Salah| ErrorAdmin[Pesan Error Kredensial] --> LoginAdmin
+    
+    VerifyAuth -->|Gagal / Belum Terdaftar| LoginError[Kredensial Salah / Akun Tidak Ditemukan] --> Portal
+    VerifyAuth -->|Berhasil| CheckStatus{Cek Status Persetujuan Akun}
+    
+    CheckStatus -->|pending| StatusPending[Peringatan: Akun Masih Ditinjau Admin] --> Portal
+    CheckStatus -->|rejected| StatusRejected[Peringatan: Pengajuan Akun Ditolak Admin] --> Portal
+    CheckStatus -->|approved| CheckRole{Cek Role Pengguna}
+    
+    CheckRole -->|siswa| CheckFirstLoginSiswa{first_login == true ATAU belum pilih DUDI?}
+    CheckFirstLoginSiswa -->|Ya| KonfigSiswa[Halaman Konfigurasi Siswa: Ganti Sandi & Pilih DUDI]
+    KonfigSiswa --> DashSiswa[Dashboard Siswa]
+    CheckFirstLoginSiswa -->|Tidak| DashSiswa
+    
+    CheckRole -->|guru| CheckFirstLoginGuru{first_login == true?}
+    CheckFirstLoginGuru -->|Ya| KonfigGuru[Halaman Konfigurasi Guru: Ganti Sandi Awal]
+    KonfigGuru --> DashGuru[Dashboard Guru]
+    CheckFirstLoginGuru -->|Tidak| DashGuru
+    
+    CheckRole -->|dudi| CheckFirstLoginDudi{first_login == true?}
+    CheckFirstLoginDudi -->|Ya| KonfigDudi[Halaman Konfigurasi DUDI: Lengkapi Data & Sandi]
+    KonfigDudi --> DashDudi[Dashboard DUDI]
+    CheckFirstLoginDudi -->|Tidak| DashDudi
 ```
 
 ---
 
-### Tabel: `companies`
-Menyimpan data tempat magang / DUDI beserta koordinat GPS untuk validasi absensi WFO.
+### 2. Alur Presensi GPS & Pengisian Laporan Siswa
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | `BIGINT` (PK) | ID unik DUDI, auto-increment |
-| `company_name` | `TEXT` | Nama perusahaan / DUDI |
-| `latitude` | `FLOAT8` | Koordinat lintang kantor DUDI |
-| `longitude` | `FLOAT8` | Koordinat bujur kantor DUDI |
-| `radius_meters` | `INT4` | Radius area (meter) untuk validasi WFO |
-| `created_at` | `TIMESTAMPTZ` | Waktu data dibuat (default: `now()`) |
-
----
-
-### Tabel: `user_accounts`
-Menyimpan seluruh akun pengguna (siswa, guru, DUDI, dan admin).
-
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | `UUID` (PK) | ID unik akun, default `gen_random_uuid()` |
-| `username` | `TEXT` | Nama akun / nama lengkap |
-| `password` | `TEXT` | Kata sandi (bcrypt hash) |
-| `role` | `TEXT` | Peran: `siswa` / `guru` / `dudi` / `admin` |
-| `status` | `TEXT` | Status akun: `pending` / `approved` / `rejected` |
-| `first_login` | `BOOL` | `true` jika belum pernah masuk dan ganti kata sandi |
-| `company_id` | `BIGINT` (FK → `companies.id`) | DUDI aktif siswa/DUDI saat ini |
-| `pending_company_id` | `BIGINT` (FK → `companies.id`) | DUDI yang sedang diajukan pindah, menunggu persetujuan Admin |
-| `pending_company_status` | `TEXT` | Status pengajuan pindah DUDI: `pending` / `approved` / `rejected` |
-| `selected` | `JSONB` | (Khusus Guru) Daftar `id` siswa bimbingan yang dipilih |
-| `created_at` | `TIMESTAMPTZ` | Waktu akun dibuat (default: `now()`) |
-
----
-
-### Tabel: `attendances`
-Mencatat setiap sesi kehadiran harian siswa (satu baris = satu hari kerja).
-
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | `BIGINT` (PK) | ID unik presensi, auto-increment |
-| `user_id` | `UUID` (FK → `user_accounts.id`) | Pemilik presensi ini |
-| `company_id` | `BIGINT` (FK → `companies.id`) | DUDI yang aktif **saat presensi dilakukan** |
-| `tanggal_absen` | `DATE` | Tanggal kehadiran (format `YYYY-MM-DD`) |
-| `jam_masuk` | `TIMESTAMPTZ` | Waktu tap masuk |
-| `jam_pulang` | `TIMESTAMPTZ` | Waktu tap pulang (nullable sebelum pulang) |
-| `status_kehadiran` | `TEXT` | Status: `WFO` (di kantor) / `WFH` / `ALPA` |
-| `created_at` | `TIMESTAMPTZ` | Waktu baris dibuat (default: `now()`) |
-
-> **Catatan penting:** Kolom `company_id` di tabel ini sengaja menyimpan DUDI pada **saat presensi dilakukan**. Ini memastikan jika siswa pindah DUDI di kemudian hari, seluruh historis presensi lama tetap terisolasi dan tidak bercampur dengan data DUDI baru.
+```mermaid
+flowchart TD
+    MulaiSiswa([Siswa Membuka Dashboard]) --> CekAbsen{Cek Status Presensi Hari Ini}
+    
+    %% Alur Absen Masuk
+    CekAbsen -->|Belum Absen Masuk| KlikMasuk[Klik Tombol 'Absen Sekarang' / Tab Masuk]
+    KlikMasuk --> AmbilGPS[Browser Meminta Izin Geolocation GPS]
+    AmbilGPS --> HitungJarak[Hitung Jarak Koordinat Siswa ke Kantor DUDI via Haversine]
+    HitungJarak --> CekRadius{Jarak <= radius_meters DUDI?}
+    CekRadius -->|Ya| SetWFO[Tetapkan Status: WFO]
+    CekRadius -->|Tidak / GPS Nonaktif| SetWFH[Tetapkan Status: WFH]
+    SetWFO --> SimpanMasuk[Insert Baris ke Tabel attendances: user_id, company_id, jam_masuk, status]
+    SetWFH --> SimpanMasuk
+    SimpanMasuk --> UpdateUI1[Indikator Hijau Aktif: 'Sudah Absen Masuk']
+    
+    %% Alur Absen Pulang
+    CekAbsen -->|Sudah Masuk, Belum Pulang| KlikPulang[Klik Tombol 'Absen Sekarang' / Tab Pulang]
+    KlikPulang --> FormLaporan[Tampil Form Laporan Kegiatan]
+    FormLaporan --> InputTeks[Input Judul & Uraian Deskripsi Kegiatan]
+    InputTeks --> PilihMedia{Pilih Sumber Foto Bukti}
+    PilihMedia -->|Kamera HP / Perangkat| BukaKamera[Streaming Kamera via WebRTC Canvas]
+    PilihMedia -->|Galeri Dokumen| UploadFile[Pilih File Gambar via FileReader]
+    BukaKamera --> ConvertBase64[Konversi Otomatis ke Base64 Data URL JPEG]
+    UploadFile --> ConvertBase64
+    ConvertBase64 --> SubmitPulang[Kirim Form Absen Pulang & Laporan]
+    SubmitPulang --> UpdateAtt[Update jam_pulang di tabel attendances]
+    UpdateAtt --> InsertRep[Insert ke tabel reports: attendance_id, judul, deskripsi, bukti_laporan]
+    InsertRep --> UpdateUI2[Indikator Hijau Aktif: 'Sudah Absen Pulang' & Tampil Pratinjau Laporan]
+    
+    %% Alur Cetak Laporan
+    CekAbsen -->|Kapan Saja| BukaLaporan[Buka Menu: Lihat Laporan]
+    BukaLaporan --> FilterBulan[Pilih Filterisasi Bulan & Tahun]
+    FilterBulan --> LoadDataDudi[Query attendances Terfilter user_id & company_id Aktif]
+    LoadDataDudi --> TampilTabel[Render Tabel Rekapitulasi]
+    TampilTabel --> CetakPDF[Klik Cetak / Shortcut Print]
+    CetakPDF --> CetakA4([Cetak Dokumen Resmi Format Standar A4])
+```
 
 ---
 
-### Tabel: `reports`
-Menyimpan laporan kegiatan harian yang diisi siswa saat absen pulang.
+### 3. Alur Mutasi DUDI Siswa & Isolasi Data
 
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | `BIGINT` (PK) | ID unik laporan, auto-increment |
-| `attendance_id` | `BIGINT` (FK → `attendances.id`) | Presensi yang terkait laporan ini |
-| `judul_laporan` | `TEXT` | Judul kegiatan yang dilaporkan |
-| `deskripsi_laporan` | `TEXT` | Deskripsi detail kegiatan |
-| `bukti_laporan` | `TEXT` | Foto bukti dalam format Base64 Data URL |
-| `created_at` | `TIMESTAMPTZ` | Waktu laporan dikirim (default: `now()`) |
-
----
-
-### Tabel: `news`
-Menyimpan berita dan pengumuman dari Admin (untuk semua) atau dari DUDI (khusus siswa di DUDI-nya).
-
-| Kolom | Tipe | Keterangan |
-|---|---|---|
-| `id` | `BIGINT` (PK) | ID unik berita, auto-increment |
-| `title` | `TEXT` | Judul berita / pengumuman |
-| `content` | `TEXT` | Isi berita |
-| `kategori` | `TEXT` | Target pembaca: `siswa` / `guru` / `dudi` |
-| `company_id` | `BIGINT` (FK → `companies.id`, nullable) | Jika diisi, berita hanya tampil untuk siswa di DUDI tersebut |
-| `created_at` | `TIMESTAMPTZ` | Waktu berita dipublikasikan (default: `now()`) |
+```mermaid
+flowchart TD
+    SiswaPindah([Siswa Membuka Menu Pengaturan]) --> PilihDudiBaru[Pilih DUDI Baru dari Dropdown]
+    PilihDudiBaru --> KirimPengajuan[Kirim Pengajuan: pending_company_id & status = pending]
+    
+    KirimPengajuan --> NotifAdmin[Pengajuan Masuk ke Dashboard Admin]
+    NotifAdmin --> KeputusanAdmin{Admin Meninjau Pengajuan Mutasi}
+    
+    KeputusanAdmin -->|Tolak| AdminTolak[Update pending_company_status = 'rejected']
+    AdminTolak --> TetapLama[Siswa Tetap Aktif di DUDI Lama]
+    
+    KeputusanAdmin -->|Setujui| AdminSetuju[Update user_accounts: company_id = DUDI Baru & Reset Kolom Pending]
+    AdminSetuju --> EfekSistem[Sinkronisasi Otomatis Seluruh Sistem]
+    
+    EfekSistem --> EfekDudiLama[Di DUDI Lama: Siswa Langsung Hilang dari Daftar Pemantauan]
+    EfekSistem --> EfekDudiBaru[Di DUDI Baru: Siswa Muncul dengan Status Belum Absen Hari Ini]
+    EfekSistem --> EfekSiswa[Di Dashboard Siswa: Beranda & Rekap Laporan Otomatis Beralih ke DUDI Baru]
+    EfekSiswa --> SelesaiMutasi([Data Presensi di DUDI Lama Tetap Tersimpan Utuh & Terpisah])
+```
 
 ---
 
