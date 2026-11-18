@@ -1,4 +1,5 @@
-<img width="1279" height="640" alt="image" src="https://github.com/user-attachments/assets/e4e3947d-0261-4778-ad4c-13df1a4661af" /># ViskaToring — Portal Absensi Magang Siswa SMK
+<img width="331" height="343" alt="image" src="https://github.com/user-attachments/assets/af7036f6-81aa-482a-8417-2af4fce32f80" />
+# ViskaToring — Portal Absensi Magang Siswa SMK
 
 **ViskaToring** adalah aplikasi web portal absensi digital untuk siswa yang sedang menjalani Praktik Kerja Lapangan (PKL/Magang). Sistem ini dirancang untuk mempermudah pencatatan kehadiran siswa, pembuatan laporan harian, serta pemantauan aktivitas oleh guru pembimbing dan pihak industri (DUDI).
 
