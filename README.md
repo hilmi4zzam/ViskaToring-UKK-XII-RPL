@@ -176,110 +176,158 @@ erDiagram
 
 ---
 
-## Flowchart Sistem (Alur Kerja Proyek)
+## Flowchart Alur ViskaToring
 
-Berikut adalah diagram alir (*flowchart*) operasional sistem ViskaToring yang mencakup seluruh alur bisnis utama:
-
-### 1. Alur Autentikasi, Role Guard & Onboarding Pengguna
-
-```mermaid
-flowchart TD
-    Start([Mulai: Pengguna Akses Web]) --> Portal{Halaman Login Utama}
-    
-    Portal -->|Klik Logo SMK 7 Kali| LoginAdmin[Halaman Login Admin Rahasia]
-    Portal -->|Input Username & Password| VerifyAuth{Verifikasi Kredensial via bcrypt}
-    
-    LoginAdmin --> VerifyAdmin{Verifikasi Admin}
-    VerifyAdmin -->|Valid| DashAdmin[Dashboard Admin]
-    VerifyAdmin -->|Salah| ErrorAdmin[Pesan Error Kredensial] --> LoginAdmin
-    
-    VerifyAuth -->|Gagal / Belum Terdaftar| LoginError[Kredensial Salah / Akun Tidak Ditemukan] --> Portal
-    VerifyAuth -->|Berhasil| CheckStatus{Cek Status Persetujuan Akun}
-    
-    CheckStatus -->|pending| StatusPending[Peringatan: Akun Masih Ditinjau Admin] --> Portal
-    CheckStatus -->|rejected| StatusRejected[Peringatan: Pengajuan Akun Ditolak Admin] --> Portal
-    CheckStatus -->|approved| CheckRole{Cek Role Pengguna}
-    
-    CheckRole -->|siswa| CheckFirstLoginSiswa{first_login == true ATAU belum pilih DUDI?}
-    CheckFirstLoginSiswa -->|Ya| KonfigSiswa[Halaman Konfigurasi Siswa: Ganti Sandi & Pilih DUDI]
-    KonfigSiswa --> DashSiswa[Dashboard Siswa]
-    CheckFirstLoginSiswa -->|Tidak| DashSiswa
-    
-    CheckRole -->|guru| CheckFirstLoginGuru{first_login == true?}
-    CheckFirstLoginGuru -->|Ya| KonfigGuru[Halaman Konfigurasi Guru: Ganti Sandi Awal]
-    KonfigGuru --> DashGuru[Dashboard Guru]
-    CheckFirstLoginGuru -->|Tidak| DashGuru
-    
-    CheckRole -->|dudi| CheckFirstLoginDudi{first_login == true?}
-    CheckFirstLoginDudi -->|Ya| KonfigDudi[Halaman Konfigurasi DUDI: Lengkapi Data & Sandi]
-    KonfigDudi --> DashDudi[Dashboard DUDI]
-    CheckFirstLoginDudi -->|Tidak| DashDudi
-```
+Berikut adalah diagram alir (*flowchart*) operasional sistem ViskaToring yang dibagi khusus berdasarkan 3 peran pengguna utama (**Siswa**, **Guru**, dan **DUDI**):
 
 ---
 
-### 2. Alur Presensi GPS & Pengisian Laporan Siswa
+### 1. Siswa
 
 ```mermaid
 flowchart TD
-    MulaiSiswa([Siswa Membuka Dashboard]) --> CekAbsen{Cek Status Presensi Hari Ini}
+    StartSiswa([Mulai: Siswa Buka Portal]) --> InputLogin[Input Nama Akun & Kata Sandi NIS]
+    InputLogin --> CekAuth{Verifikasi Kredensial Siswa}
     
-    %% Alur Absen Masuk
-    CekAbsen -->|Belum Absen Masuk| KlikMasuk[Klik Tombol 'Absen Sekarang' / Tab Masuk]
-    KlikMasuk --> AmbilGPS[Browser Meminta Izin Geolocation GPS]
-    AmbilGPS --> HitungJarak[Hitung Jarak Koordinat Siswa ke Kantor DUDI via Haversine]
-    HitungJarak --> CekRadius{Jarak <= radius_meters DUDI?}
-    CekRadius -->|Ya| SetWFO[Tetapkan Status: WFO]
-    CekRadius -->|Tidak / GPS Nonaktif| SetWFH[Tetapkan Status: WFH]
-    SetWFO --> SimpanMasuk[Insert Baris ke Tabel attendances: user_id, company_id, jam_masuk, status]
+    CekAuth -->|Kredensial Salah| ErrLogin[Tampilkan Pesan Error Login] --> InputLogin
+    CekAuth -->|Kredensial Valid| CekStatus{Cek Status Persetujuan Akun}
+    
+    CekStatus -->|pending| StatusPending[Peringatan: Akun Masih Menunggu Persetujuan Admin] --> StartSiswa
+    CekStatus -->|rejected| StatusRejected[Peringatan: Pengajuan Akun Ditolak Sekolah] --> StartSiswa
+    CekStatus -->|approved| CekFirstLogin{first_login == true ATAU Belum Memilih DUDI?}
+    
+    CekFirstLogin -->|Ya| KonfigAwal[Halaman Konfigurasi: Ganti Kata Sandi & Pilih DUDI Tempat Magang]
+    KonfigAwal --> MasukDashboard[Masuk ke Beranda Siswa]
+    CekFirstLogin -->|Tidak| MasukDashboard
+    
+    MasukDashboard --> FiturSiswa{Pilih Aktivitas Siswa}
+    
+    %% Aktivitas 1: Absensi Masuk
+    FiturSiswa -->|Absen Masuk Pagi| CekMasuk{Sudah Absen Masuk Hari Ini?}
+    CekMasuk -->|Sudah| InfoSudahMasuk[Tombol Hijau: Sudah Absen Masuk]
+    CekMasuk -->|Belum| KlikAbsenMasuk[Tekan Tombol 'Absen Sekarang']
+    KlikAbsenMasuk --> DeteksiGPS[Browser Mendeteksi Titik Koordinat GPS Siswa]
+    DeteksiGPS --> HitungJarak[Hitung Jarak ke Kantor DUDI via Rumus Haversine]
+    HitungJarak --> CekRadius{Jarak <= Radius Toleransi Kantor DUDI?}
+    CekRadius -->|Ya, Dalam Radius| SetWFO[Status Kehadiran Otomatis: WFO]
+    CekRadius -->|Tidak / Luar Radius / GPS Mati| SetWFH[Status Kehadiran Otomatis: WFH]
+    SetWFO --> SimpanMasuk[Insert ke Tabel attendances: user_id, company_id, jam_masuk, status]
     SetWFH --> SimpanMasuk
-    SimpanMasuk --> UpdateUI1[Indikator Hijau Aktif: 'Sudah Absen Masuk']
+    SimpanMasuk --> SuksesMasuk[Status Beranda Berubah: 'Sudah Absen Masuk']
     
-    %% Alur Absen Pulang
-    CekAbsen -->|Sudah Masuk, Belum Pulang| KlikPulang[Klik Tombol 'Absen Sekarang' / Tab Pulang]
-    KlikPulang --> FormLaporan[Tampil Form Laporan Kegiatan]
-    FormLaporan --> InputTeks[Input Judul & Uraian Deskripsi Kegiatan]
-    InputTeks --> PilihMedia{Pilih Sumber Foto Bukti}
-    PilihMedia -->|Kamera HP / Perangkat| BukaKamera[Streaming Kamera via WebRTC Canvas]
-    PilihMedia -->|Galeri Dokumen| UploadFile[Pilih File Gambar via FileReader]
-    BukaKamera --> ConvertBase64[Konversi Otomatis ke Base64 Data URL JPEG]
-    UploadFile --> ConvertBase64
-    ConvertBase64 --> SubmitPulang[Kirim Form Absen Pulang & Laporan]
-    SubmitPulang --> UpdateAtt[Update jam_pulang di tabel attendances]
-    UpdateAtt --> InsertRep[Insert ke tabel reports: attendance_id, judul, deskripsi, bukti_laporan]
-    InsertRep --> UpdateUI2[Indikator Hijau Aktif: 'Sudah Absen Pulang' & Tampil Pratinjau Laporan]
+    %% Aktivitas 2: Absen Pulang & Laporan
+    FiturSiswa -->|Absen Pulang Sore| CekPulang{Sudah Absen Pulang?}
+    CekPulang -->|Sudah| InfoSudahPulang[Tombol Hijau: Sudah Absen Pulang]
+    CekPulang -->|Belum| KlikAbsenPulang[Tekan Tombol 'Absen Sekarang' Tab Pulang]
+    KlikAbsenPulang --> IsiLaporan[Isi Form: Judul & Deskripsi Kegiatan Hari Ini]
+    IsiLaporan --> PilihKamera{Pilih Metode Foto Bukti}
+    PilihKamera -->|Kamera HP Langsung| KameraWebRTC[Buka Kamera Perangkat via WebRTC Canvas]
+    PilihKamera -->|Galeri Foto| UnggahGaleri[Pilih File Gambar via FileReader]
+    KameraWebRTC --> KonversiBase64[Konversi Gambar Otomatis ke Base64 Data URL JPEG]
+    UnggahGaleri --> KonversiBase64
+    KonversiBase64 --> SubmitPulang[Kirim Form Absen Pulang]
+    SubmitPulang --> SimpanPulang[Update jam_pulang di attendances & Insert ke tabel reports]
+    SimpanPulang --> PratinjauTampil[Pratinjau Foto & Laporan Langsung Tampil di Beranda]
     
-    %% Alur Cetak Laporan
-    CekAbsen -->|Kapan Saja| BukaLaporan[Buka Menu: Lihat Laporan]
-    BukaLaporan --> FilterBulan[Pilih Filterisasi Bulan & Tahun]
-    FilterBulan --> LoadDataDudi[Query attendances Terfilter user_id & company_id Aktif]
-    LoadDataDudi --> TampilTabel[Render Tabel Rekapitulasi]
-    TampilTabel --> CetakPDF[Klik Cetak / Shortcut Print]
-    CetakPDF --> CetakA4([Cetak Dokumen Resmi Format Standar A4])
+    %% Aktivitas 3: Laporan & Cetak
+    FiturSiswa -->|Menu Lihat Laporan| BukaMenuLaporan[Buka Halaman Laporan]
+    BukaMenuLaporan --> FilterBulanTahun[Pilih Filter Bulan & Tahun]
+    FilterBulanTahun --> QueryLaporan[Query attendances Terfilter user_id & company_id Aktif]
+    QueryLaporan --> TampilTabelLaporan[Tampilkan Tabel Rekapitulasi Kehadiran Siswa]
+    TampilTabelLaporan --> TombolPrint[Klik Tombol 'Cetak Rekapitulasi']
+    TombolPrint --> CetakA4([Cetak Dokumen Resmi Format Standar A4 Bersih])
+    
+    %% Aktivitas 4: Pengaturan & Mutasi
+    FiturSiswa -->|Menu Pengaturan| MenuPengaturan[Ganti Kata Sandi / Ajukan Pindah DUDI]
+    MenuPengaturan --> AjukanPindah[Pilih DUDI Baru -> Kirim Permohonan Mutasi ke Admin]
+    AjukanPindah --> TungguApproval([Status Mutasi Pending Menunggu Persetujuan Admin])
 ```
 
 ---
 
-### 3. Alur Mutasi DUDI Siswa & Isolasi Data
+### 2. Guru
 
 ```mermaid
 flowchart TD
-    SiswaPindah([Siswa Membuka Menu Pengaturan]) --> PilihDudiBaru[Pilih DUDI Baru dari Dropdown]
-    PilihDudiBaru --> KirimPengajuan[Kirim Pengajuan: pending_company_id & status = pending]
+    StartGuru([Mulai: Guru Pembimbing Buka Portal]) --> InputLoginGuru[Input Nama Akun & Kata Sandi Guru]
+    InputLoginGuru --> CekAuthGuru{Verifikasi Kredensial Akun Guru}
     
-    KirimPengajuan --> NotifAdmin[Pengajuan Masuk ke Dashboard Admin]
-    NotifAdmin --> KeputusanAdmin{Admin Meninjau Pengajuan Mutasi}
+    CekAuthGuru -->|Kredensial Salah| ErrLoginGuru[Tampilkan Pesan Error Login] --> InputLoginGuru
+    CekAuthGuru -->|Kredensial Valid| CekStatusGuru{Cek Status Persetujuan Akun}
     
-    KeputusanAdmin -->|Tolak| AdminTolak[Update pending_company_status = 'rejected']
-    AdminTolak --> TetapLama[Siswa Tetap Aktif di DUDI Lama]
+    CekStatusGuru -->|pending / rejected| TolakAksesGuru[Akses Ditolak / Menunggu Persetujuan Admin] --> StartGuru
+    CekStatusGuru -->|approved| CekFirstLoginGuru{first_login == true?}
     
-    KeputusanAdmin -->|Setujui| AdminSetuju[Update user_accounts: company_id = DUDI Baru & Reset Kolom Pending]
-    AdminSetuju --> EfekSistem[Sinkronisasi Otomatis Seluruh Sistem]
+    CekFirstLoginGuru -->|Ya| KonfigGuru[Halaman Konfigurasi: Ganti Kata Sandi Awal Guru]
+    KonfigGuru --> DashboardGuru[Masuk ke Dashboard Guru]
+    CekFirstLoginGuru -->|Tidak| DashboardGuru
     
-    EfekSistem --> EfekDudiLama[Di DUDI Lama: Siswa Langsung Hilang dari Daftar Pemantauan]
-    EfekSistem --> EfekDudiBaru[Di DUDI Baru: Siswa Muncul dengan Status Belum Absen Hari Ini]
-    EfekSistem --> EfekSiswa[Di Dashboard Siswa: Beranda & Rekap Laporan Otomatis Beralih ke DUDI Baru]
-    EfekSiswa --> SelesaiMutasi([Data Presensi di DUDI Lama Tetap Tersimpan Utuh & Terpisah])
+    DashboardGuru --> FiturGuru{Aktivitas Guru Pembimbing}
+    
+    %% Pemantauan Harian
+    FiturGuru -->|Monitoring Absensi Harian| LoadDataSiswa[Sistem Memuat Seluruh Siswa Berstatus Approved]
+    LoadDataSiswa --> LoadAbsenHariIni[Query Tabel attendances Khusus Tanggal Hari Ini]
+    LoadAbsenHariIni --> TampilTabelMonitoring[Tampilkan Tabel Pemantauan Real-Time: Status Masuk/Pulang Siswa]
+    TampilTabelMonitoring --> ResetHarian([Sistem Otomatis Mereset Status Menjadi Belum Absen Setiap Hari Baru])
+    
+    %% Filter Siswa Bimbingan
+    FiturGuru -->|Filter Siswa Bimbingan| KlikTombolFilter[Klik Tombol 'Pilih Siswa Binaan']
+    KlikTombolFilter --> BukaModalPilih[Buka Modal Checklist Siswa Bimbingan]
+    BukaModalPilih --> PilihSiswaBinaan[Centang Nama Siswa yang Dibimbing Guru Ini]
+    PilihSiswaBinaan --> SimpanPilihan[Simpan Pilihan ke Kolom user_accounts.selected Database]
+    SimpanPilihan --> FilterAktif[Dashboard Guru Otomatis Hanya Menampilkan Siswa Binaan Terpilih]
+    
+    %% Periksa Laporan Harian
+    FiturGuru -->|Periksa Hasil Kegiatan Siswa| KlikDetailLaporan[Klik Siswa yang Sudah Mengirim Laporan]
+    KlikDetailLaporan --> ModalDetailLaporan[Buka Modal Detail Laporan Harian Siswa]
+    ModalDetailLaporan --> TinjauLaporan[Tinjau Jam Masuk/Pulang, Judul, Deskripsi, dan Foto Bukti Kegiatan]
+    TinjauLaporan --> TutupModal[Tutup Modal Pemeriksaan]
+    
+    %% Berita & Pengaturan
+    FiturGuru -->|Informasi & Akun| MenuLainGuru[Menu Berita Sekolah & Pengaturan Kata Sandi]
+```
+
+---
+
+### 3. DUDI
+
+```mermaid
+flowchart TD
+    StartDudi([Mulai: Instruktur DUDI Buka Portal]) --> InputLoginDudi[Input Nama Akun Perusahaan & Kata Sandi]
+    InputLoginDudi --> CekAuthDudi{Verifikasi Kredensial Akun DUDI}
+    
+    CekAuthDudi -->|Kredensial Salah| ErrLoginDudi[Tampilkan Pesan Error Login] --> InputLoginDudi
+    CekAuthDudi -->|Kredensial Valid| CekStatusDudi{Cek Status Persetujuan Akun}
+    
+    CekStatusDudi -->|pending / rejected| TolakAksesDudi[Akses Ditolak / Menunggu Persetujuan Admin] --> StartDudi
+    CekStatusDudi -->|approved| CekFirstLoginDudi{first_login == true?}
+    
+    CekFirstLoginDudi -->|Ya| KonfigDudi[Halaman Konfigurasi: Lengkapi Profil Perusahaan & Kata Sandi]
+    KonfigDudi --> DashboardDudi[Masuk ke Dashboard DUDI]
+    CekFirstLoginDudi -->|Tidak| DashboardDudi
+    
+    DashboardDudi --> FiturDudi{Aktivitas Instruktur DUDI}
+    
+    %% Pemantauan Siswa Magang Khusus DUDI Ini
+    FiturDudi -->|Pemantauan Siswa Magang| QuerySiswaDudi[Query Siswa: role = siswa & company_id = DUDI Ini]
+    QuerySiswaDudi --> CekMutasiSiswa{Apakah Ada Siswa yang Pindah / Masuk DUDI?}
+    CekMutasiSiswa -->|Siswa Pindah ke DUDI Lain| SiswaHilang[Nama Siswa Otomatis Hilang dari Dashboard DUDI Ini]
+    CekMutasiSiswa -->|Siswa Baru Masuk ke DUDI Ini| SiswaMasuk[Nama Siswa Langsung Muncul dengan Status Belum Absen]
+    CekMutasiSiswa -->|Siswa Aktif Saat Ini| TampilPresensiDudi[Tampilkan Status Masuk/Pulang & Jam Kehadiran Hari Ini]
+    
+    %% Periksa Laporan Pekerjaan
+    FiturDudi -->|Tinjau Laporan Harian Siswa| KlikLaporanDudi[Klik Tombol 'Lihat Laporan' pada Baris Siswa]
+    KlikLaporanDudi --> ModalLaporanDudi[Tampil Modal Laporan: Judul Tugas, Uraian Kerja, dan Foto Bukti]
+    ModalLaporanDudi --> ValidasiPekerjaan[Instruktur DUDI Memverifikasi Hasil Kerja Siswa]
+    
+    %% Kelola Berita Khusus DUDI
+    FiturDudi -->|Menu Berita DUDI| BukaMenuBeritaDudi[Buka Halaman Berita Perusahaan]
+    BukaMenuBeritaDudi --> BuatPengumuman[Tulis Judul & Konten Pengumuman Internal DUDI]
+    BuatPengumuman --> SimpanBerita[Simpan ke Tabel news dengan company_id = DUDI Ini]
+    SimpanBerita --> BroadcastSiswa[Pengumuman Otomatis Hanya Muncul di Dashboard Siswa Magang DUDI Ini]
+    
+    %% Pengaturan Profil Perusahaan
+    FiturDudi -->|Menu Pengaturan| MenuPengaturanDudi[Update Profil Perusahaan, Titik Lokasi GPS, atau Ganti Kata Sandi]
 ```
 
 ---
