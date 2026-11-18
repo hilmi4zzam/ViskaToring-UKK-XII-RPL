@@ -2,7 +2,7 @@
 
 **ViskaToring** adalah aplikasi web portal absensi digital untuk siswa yang sedang menjalani Praktik Kerja Lapangan (PKL/Magang). Sistem ini dirancang untuk mempermudah pencatatan kehadiran siswa, pembuatan laporan harian, serta pemantauan aktivitas oleh guru pembimbing dan pihak industri (DUDI).
 
-> 🌐 **Live Demo:** [https://portal-viskatoring.web.id](https://portal-viskatoring.web.id)
+>  **Live Demo:** [https://viskatoring.web.id](https://viskatoring.web.id)
 
 ---
 
@@ -34,9 +34,9 @@
 
 ## Akun Demo & Hak Akses
 
-> ⚠️ **Catatan:** Untuk login Admin, klik logo SMK **7 kali berturut-turut** di halaman utama untuk memunculkan halaman Login Admin tersembunyi.
+>  **Catatan:** Untuk login Admin, klik logo SMK **7 kali berturut-turut** di halaman utama untuk memunculkan halaman Login Admin tersembunyi.
 
-### 🎓 Siswa
+###  Siswa
 | Field | Value |
 |---|---|
 | **Nama Akun** | `Abryan Yoga Pratama` |
@@ -52,7 +52,7 @@
 
 ---
 
-### 👨‍🏫 Guru Pembimbing
+###  Guru Pembimbing
 | Field | Value |
 |---|---|
 | **Nama Akun** | `Binar Aris Purwaka S.Kom` |
@@ -67,7 +67,7 @@
 
 ---
 
-### 🏭 Instruktur DUDI (Enuma Technology)
+###  Instruktur DUDI (Enuma Technology)
 | Field | Value |
 |---|---|
 | **Nama Akun** | `Enuma Technology` |
@@ -81,7 +81,7 @@
 
 ---
 
-### 🔐 Admin
+###  Admin
 | Field | Value |
 |---|---|
 | **Nama Akun** | `admin123` |
@@ -387,9 +387,3 @@ viskatoring/
     ├── smk.svg                         # Logo SMK (favicon)
     └── halaman depan.webp              # Foto latar halaman login
 ```
-
----
-
-## Lisensi
-
-Proyek ini dibuat untuk keperluan **Ujian Kompetensi Keahlian (UKK)** SMK. Seluruh kode bersifat open-source dan bebas digunakan untuk keperluan pendidikan.
