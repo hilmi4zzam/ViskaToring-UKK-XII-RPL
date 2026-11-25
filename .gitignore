@@ -10,6 +10,15 @@
 !.yarn/releases
 !.yarn/versions
 
+#keperluan docs laporan pak arif
+/Draft Laporan UKK RPL 2026-2027.pdf
+/extract_logo.js
+/generate_laporan_docx.js
+/test_docx.js
+/Laporan_UKK_Viskatoring.md
+/Laporan_UKK_Viskatoring_Mohamad_Hilmi_Azzam.docx
+/logo_smk.png
+
 #data dummy
 /data/dudi.json
 /data/users.json
