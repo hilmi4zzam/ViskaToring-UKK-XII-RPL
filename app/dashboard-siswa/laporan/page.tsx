@@ -27,6 +27,17 @@ export default function LaporanPage() {
   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Modal Pilihan Output Cetak Laporan (Rekapitulasi Absensi / Rekapitulasi Laporan PKL)
+  const [printChoiceModalOpen, setPrintChoiceModalOpen] = useState(false);
+  const [printType, setPrintType] = useState<'absensi' | 'pkl'>('absensi');
+
+  const handleTriggerPrint = () => {
+    setPrintChoiceModalOpen(false);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   const loadData = useCallback(async (user: User) => {
     setLoading(true);
     const today = getLocalDateString();
@@ -178,7 +189,8 @@ export default function LaporanPage() {
           </div>
           
           <button 
-            onClick={() => window.print()}
+            type="button"
+            onClick={() => setPrintChoiceModalOpen(true)}
             className="text-black hover:text-gray-700 transition-colors p-1 cursor-pointer" 
             title="Cetak Laporan"
           >
@@ -345,9 +357,74 @@ export default function LaporanPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Pilihan Output Cetak Laporan */}
+      {printChoiceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[1px] p-4 print:hidden">
+          <div className="bg-[#EDEDED] w-full max-w-[460px] rounded-[28px] p-7 relative shadow-2xl flex flex-col border border-gray-300">
+            {/* Tombol Kembali (Panah Kiri) */}
+            <button 
+              type="button"
+              onClick={() => setPrintChoiceModalOpen(false)}
+              className="absolute top-7 left-7 text-black hover:opacity-70 transition-opacity p-1 flex items-center justify-center cursor-pointer"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+
+            {/* Header: Judul */}
+            <div className="text-center pt-0.5 mb-6">
+              <h2 className="text-[22px] font-semibold text-black">Pilih Jenis Laporan Cetak</h2>
+            </div>
+
+            {/* Pilihan Jenis Laporan (Radio Button) */}
+            <div className="mb-8">
+              <p className="text-[14px] font-medium text-black">
+                Tentukan Jenis Laporan :
+              </p>
+              <p className="text-[11px] text-gray-500 mb-3 flex items-center gap-1">
+                <span>ⓘ</span> Laporan hanya dapat dipilih satu opsi
+              </p>
+              <div className="flex flex-col gap-2.5">
+                <label 
+                  className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-black"
+                  onClick={() => setPrintType('absensi')}
+                >
+                  <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
+                    {printType === 'absensi' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
+                  </div>
+                  <span>Rekapitulasi Absensi</span>
+                </label>
+                <label 
+                  className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-black"
+                  onClick={() => setPrintType('pkl')}
+                >
+                  <div className="w-5 h-5 rounded-[4px] border-2 border-[#000066] flex items-center justify-center bg-white shrink-0">
+                    {printType === 'pkl' && <div className="w-2.5 h-2.5 bg-[#000066] rounded-[2px]" />}
+                  </div>
+                  <span>Rekapitulasi Laporan PKL</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Tombol Cetak di Kanan Bawah */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleTriggerPrint}
+                className="bg-[#000066] text-white px-8 py-2.5 rounded-xl font-medium text-[14px] hover:bg-[#000044] transition-colors shadow-sm cursor-pointer"
+              >
+                Cetak
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
 
-    {/* DOKUMEN KHUSUS PRINT (Sesuai Persis Gambar Lampiran 2) */}
+    {/* DOKUMEN KHUSUS PRINT 1: REKAPITULASI ABSENSI SISWA (Format Portrait A4) */}
     <div className="print-page-document hidden text-black">
       {/* Judul Dokumen */}
       <div className="text-center mb-8 pt-2">
@@ -414,15 +491,85 @@ export default function LaporanPage() {
 
       {/* Footer Khusus Print di Pojok Kiri Bawah */}
       <div className="print-footer text-[12px] text-gray-800 font-normal">
-        viskatoring.web.id
+        portal-viskatoring.web.id
       </div>
     </div>
 
-    {/* Global Print Styles untuk Menghilangkan Header/Footer Bawaan Browser */}
+    {/* DOKUMEN KHUSUS PRINT 2: REKAPITULASI LAPORAN PKL SISWA (Format Landscape A4) */}
+    <div className="print-page-document-pkl hidden text-black">
+      {/* Judul Dokumen */}
+      <div className="text-center mb-8 pt-2">
+        <h1 className="text-[19px] font-bold uppercase tracking-wider text-black">
+          REKAPITULASI LAPORAN PKL SISWA
+        </h1>
+      </div>
+
+      {/* Info Siswa & Periode */}
+      <div className="mb-6 text-black text-[13px] font-normal leading-relaxed">
+        <div className="flex items-center">
+          <span className="w-24">Nama Siswa</span>
+          <span className="mr-2.5">:</span>
+          <span>{currentUser?.username || 'Skolastika Athalia Calya'}</span>
+        </div>
+        <div className="flex items-center mt-1">
+          <span className="w-24">Periode</span>
+          <span className="mr-2.5">:</span>
+          <span>{selectedMonth} {selectedYear}</span>
+        </div>
+      </div>
+
+      {/* Tabel Rekapitulasi Laporan PKL Khusus Print */}
+      <table className="w-full border-collapse border border-black text-center text-black">
+        <thead>
+          <tr className="bg-white">
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[15%]">Tanggal</th>
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[28%]">Judul Laporan</th>
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[42%]">Deskripsi Laporan</th>
+            <th className="border border-black font-bold text-[13px] text-black py-2.5 px-3 w-[15%]">TTD Instruktur</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredAttendances.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="border border-black py-8 text-center text-gray-500 text-[13px]">
+                Tidak ada data laporan PKL pada {selectedMonth} {selectedYear}.
+              </td>
+            </tr>
+          ) : (
+            filteredAttendances.map((att) => {
+              const rep = att.reports && att.reports.length > 0 ? att.reports[0] : null;
+              return (
+                <tr key={att.id}>
+                  <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal">
+                    {formatTanggal(att.tanggal_absen)}
+                  </td>
+                  <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal">
+                    {rep?.judul_laporan || '-'}
+                  </td>
+                  <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal whitespace-pre-wrap">
+                    {rep?.deskripsi_laporan || '-'}
+                  </td>
+                  <td className="border border-black py-2.5 px-3 text-[13px] text-black font-normal h-9">
+                    {/* Kotak kosong untuk tanda tangan instruktur */}
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+
+      {/* Footer Khusus Print di Pojok Kiri Bawah */}
+      <div className="print-footer-pkl text-[12px] text-gray-800 font-normal">
+        portal-viskatoring.web.id
+      </div>
+    </div>
+
+    {/* Global Print Styles untuk Mengatur Orientasi Kertas (Portrait / Landscape A4) */}
     <style>{`
       @media print {
         @page {
-          size: A4 portrait;
+          size: ${printType === 'pkl' ? 'A4 landscape' : 'A4 portrait'};
           margin: 0 !important;
         }
         html, body {
@@ -437,25 +584,47 @@ export default function LaporanPage() {
         body * {
           visibility: hidden !important;
         }
-        .print-page-document, .print-page-document * {
-          visibility: visible !important;
-        }
-        .print-page-document {
-          display: block !important;
-          position: absolute !important;
-          left: 0 !important;
-          top: 0 !important;
-          width: 210mm !important;
-          min-height: 297mm !important;
-          padding: 24mm 20mm 20mm 20mm !important;
-          box-sizing: border-box !important;
-          background: white !important;
-        }
-        .print-footer {
-          position: absolute !important;
-          bottom: 20mm !important;
-          left: 20mm !important;
-        }
+        ${printType === 'pkl' ? `
+          .print-page-document-pkl, .print-page-document-pkl * {
+            visibility: visible !important;
+          }
+          .print-page-document-pkl {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 297mm !important;
+            min-height: 210mm !important;
+            padding: 20mm 24mm 20mm 24mm !important;
+            box-sizing: border-box !important;
+            background: white !important;
+          }
+          .print-footer-pkl {
+            position: absolute !important;
+            bottom: 16mm !important;
+            left: 24mm !important;
+          }
+        ` : `
+          .print-page-document, .print-page-document * {
+            visibility: visible !important;
+          }
+          .print-page-document {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 210mm !important;
+            min-height: 297mm !important;
+            padding: 24mm 20mm 20mm 20mm !important;
+            box-sizing: border-box !important;
+            background: white !important;
+          }
+          .print-footer {
+            position: absolute !important;
+            bottom: 20mm !important;
+            left: 20mm !important;
+          }
+        `}
       }
     `}</style>
   </>
